@@ -39,6 +39,8 @@ void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
+    UE_LOG(LogTemp, Error, TEXT("BeginPlay: UTP_WeaponComponent's owner is not an AWeapon!"));
+
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 }
 
@@ -292,24 +294,4 @@ void UTP_WeaponComponent::FinishReload()
 
 	OnAmmoChanged.Broadcast(CurrentAmmo, TotalAmmo);
 	UE_LOG(LogTemp, Log, TEXT("FinishReload: CurrentAmmo: %d. TotalAmmo: %d."), CurrentAmmo, TotalAmmo);
-}
-
-void UTP_WeaponComponent::StopFire()
-{
-
-}
-
-void UTP_WeaponComponent::StopFire()
-{
-
-}
-
-void UTP_WeaponComponent::StopFire()
-{
-
-}
-
-void UTP_WeaponComponent::StopFire()
-{
-
 }

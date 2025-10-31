@@ -86,8 +86,8 @@ void ACPPStudyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &ACPPStudyCharacter::StartReload);
 
 		// Bind Shoot event
-		EnhancedInputComponent->BindAction(ShootingAction, ETriggerEvent::Started, this, &ACPPStudyCharacter::StartShoot);
-		EnhancedInputComponent->BindAction(ShootingAction, ETriggerEvent::Completed, this, &ACPPStudyCharacter::StopShoot);
+		EnhancedInputComponent->BindAction(ShootingAction, ETriggerEvent::Started, this, &ACPPStudyCharacter::StartFire);
+		EnhancedInputComponent->BindAction(ShootingAction, ETriggerEvent::Completed, this, &ACPPStudyCharacter::StopFire);
 	}
 	else
 	{

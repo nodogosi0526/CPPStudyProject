@@ -35,10 +35,10 @@ public:
 
 	// �Q�b�_�[�֐�
 
-	UPROPERTY(BlueprintPure, Category = "AAA | Weapon")
+	UFUNCTION(BlueprintPure, Category = "AAA | Weapon")
 	int32 GetCurrentAmmo()const { return CurrentAmmo; }
 
-	UPROPERTY(BlueprintPure, Category = "AAA | Weapon")
+	UFUNCTION(BlueprintPure, Category = "AAA | Weapon")
 	int32 GetTotalAmmo()const { return TotalAmmo; }
 
 	// �f���Q�[�g
