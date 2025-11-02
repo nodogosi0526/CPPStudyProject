@@ -181,7 +181,7 @@ void UTP_WeaponComponent::Fire()
 	USkeletalMeshComponent* Mesh = OwningCharacter->GetMesh1P();
 	UAnimInstance* AnimInstance = Mesh ? Mesh->GetAnimInstance() : nullptr;
 
-	// �����^�[�W���Đ�
+	// Fire Montage
 
 	if (AnimInstance && OwningWeapon->FireMontage)
 	{
@@ -196,14 +196,14 @@ void UTP_WeaponComponent::Fire()
 		}
 	}
 
-	// �T�E���h�Đ�
+	// Fire Sound
 
 	if (OwningWeapon->FireSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, OwningWeapon->FireSound, OwningCharacter->GetActorLocation());
 	}
 
-	// �G�t�F�N�g�Đ��@(�}�Y���G�t�F�N�g)
+	// Muzzle Effect (Niagara System)
 
 	if (OwningWeapon->MuzzleFlash && Mesh)
 	{
@@ -218,7 +218,7 @@ void UTP_WeaponComponent::Fire()
 		);
 	}
 
-	// ���C���g���[�X
+	// Collision Query
 
 	APlayerController* PlayerController = Cast<APlayerController>(OwningCharacter->GetController());
 	if (!PlayerController)
@@ -236,7 +236,7 @@ void UTP_WeaponComponent::Fire()
 	const FVector TraceEnd = TraceStart + ShotDirection * OwningWeapon->MaxRange;
 
 	FHitResult HitResult;
-	//�@�g���[�X�ݒ�
+	//Collision Query Parameters
 	FCollisionQueryParams CollisionParams(SCENE_QUERY_STAT(WeaponTrace), true);
 	CollisionParams.AddIgnoredActor(OwningCharacter);
 	CollisionParams.AddIgnoredActor(OwningWeapon);
@@ -245,7 +245,7 @@ void UTP_WeaponComponent::Fire()
 	const ECollisionChannel TraceChannel = ECC_Visibility;
 	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, TraceChannel, CollisionParams);
 
-	// (�f�o�b�O)���C�������鉻
+	// (Debug) Line Trace
 #if WITH_EDITOR
 	DrawDebugLine(GetWorld(), TraceStart, TraceEnd, bHit ? FColor::Red : FColor::Green, false, 1.0f, 0, 1.0f);
 	if (bHit)
@@ -258,9 +258,9 @@ void UTP_WeaponComponent::Fire()
 	{
 		AActor* HitActor = HitResult.GetActor();
 
-		// �_���[�W����
+		// Damage
 
-		// �q�b�g�G�t�F�N�g
+    // Impact Effect
 
 		if (OwningWeapon->ImpactEffect)
 		{
@@ -292,4 +292,23 @@ void UTP_WeaponComponent::FinishReload()
 
 	OnAmmoChanged.Broadcast(CurrentAmmo, TotalAmmo);
 	UE_LOG(LogTemp, Log, TEXT("FinishReload: CurrentAmmo: %d. TotalAmmo: %d."), CurrentAmmo, TotalAmmo);
+}
+
+bool UTP_WeaponComponent::CanReload() const
+{
+  if (!OwningWeapon) return false;
+  return !bIsReloading && (CurrentAmmo < OwningWeapon->MagazineCapacity) && (TotalAmmo > 0);
+}
+
+void UTP_WeaponComponent::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+  if (!bInterrupted)
+  {
+    FinishRelaod();
+  }
+  else
+  {
+    bIsReloading = false;
+    UE_LOG(LogTemp, Warning, TEXT("OnReloadMontageEnded: Reload montage interrupted."));
+  }
 }

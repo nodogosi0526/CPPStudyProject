@@ -21,7 +21,7 @@ public:
 
 	UTP_WeaponComponent();
 
-	// �p�u���b�N�֐��i�L�����N�^�[����Ă΂��֐��j
+	// Function called from outside  
 
 	void InitializeAmmo(int32 InitialClipAmmo, int32 InitialTotalAmmo);
 
@@ -33,7 +33,7 @@ public:
 
 	void StartReload();
 
-	// �Q�b�_�[�֐�
+	// Getter functions
 
 	UFUNCTION(BlueprintPure, Category = "AAA | Weapon")
 	int32 GetCurrentAmmo()const { return CurrentAmmo; }
@@ -41,7 +41,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "AAA | Weapon")
 	int32 GetTotalAmmo()const { return TotalAmmo; }
 
-	// �f���Q�[�g
+	// Delegate
 
 	UPROPERTY(BlueprintAssignable, Category = "AAA | Events")
 	FOnWeaponAmmoChangedSignature OnAmmoChanged;
@@ -67,7 +67,7 @@ private:
 	UFUNCTION()
 	void OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
-	// �v���p�e�B
+	// Owner
 
 	UPROPERTY()
 	ACPPStudyCharacter* OwningCharacter;
@@ -75,7 +75,7 @@ private:
 	UPROPERTY()
 	AWeapon* OwningWeapon;
 
-	// �e��
+	// Owner's weapon
 
 	UPROPERTY(VisibleInstanceOnly, Category = "AAA | Weapon State")
 	int32 CurrentAmmo;
@@ -83,12 +83,12 @@ private:
 	UPROPERTY(VisibleInstanceOnly, Category = "AAA | Weapon State")
 	int32 TotalAmmo;
 
-	// ��ԃt���O
+	// Is reloading?
 
 	UPROPERTY(VisibleInstanceOnly, Category = "AAA | Weapon State")
 	bool bIsReloading = false;
 
-	// �A�˕���p�̃^�C�}�[�n���h��
+	// Fire interval timer
 
 	FTimerHandle FireRateTimerHandle;;
 };
