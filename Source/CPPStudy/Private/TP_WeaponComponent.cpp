@@ -39,8 +39,6 @@ void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-    UE_LOG(LogTemp, Error, TEXT("BeginPlay: UTP_WeaponComponent's owner is not an AWeapon!"));
-
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 }
 
