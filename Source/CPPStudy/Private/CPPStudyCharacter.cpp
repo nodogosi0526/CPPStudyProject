@@ -100,7 +100,7 @@ void ACPPStudyCharacter::EquipWeapon(TSubclassOf<AWeapon> WeaponClass)
 {
 	if (EquippedWeapon)
 	{
-		// TODO: ��������̔j��������C���x���g���ւ̊i�[�����������ɒǉ�
+		// Initialize the equipped weapon
 		EquippedWeapon->Destroy();
 		EquippedWeapon = nullptr;
 		EquippedWeaponComponent = nullptr;
@@ -108,7 +108,7 @@ void ACPPStudyCharacter::EquipWeapon(TSubclassOf<AWeapon> WeaponClass)
 
 	if (!WeaponClass)
 	{
-		UE_LOG(LogTemplateCharacter, Warning, TEXT("EquipWeapon faild: WeaponClass is null."));
+		UE_LOG(LogTemplateCharacter, Warning, TEXT("EquipWeapon: WeaponClass is null."));
 		return;
 	}
 
@@ -125,6 +125,7 @@ void ACPPStudyCharacter::EquipWeapon(TSubclassOf<AWeapon> WeaponClass)
 		if (EquippedWeaponComponent)
 		{
 			EquippedWeaponComponent->AttachWeaponToCharacter(this);
+			EquippedWeaponComponent->InitializeAmmo(EquippedWeapon->MagazineCapacity, EquippedWeapon->MaxTotalAmmo);
 			EquippedWeaponComponent->OnAmmoChanged.AddDynamic(this, &ACPPStudyCharacter::HandleWeaponAmmoChanged);
 			OnAmmoChanged.Broadcast(EquippedWeaponComponent->GetCurrentAmmo(), EquippedWeaponComponent->GetTotalAmmo());
 		}
@@ -158,7 +159,7 @@ void ACPPStudyCharacter::TakeDamage(float TakenDamage)
 	}
 }
 
-// ���͏��� -> ����R���|�[�l���g�ւ̈Ϗ�
+// ���͏��� -> ����R���|�[�l���g�ւ̈Ϗ� 
 
 void ACPPStudyCharacter::StartFire()
 {
