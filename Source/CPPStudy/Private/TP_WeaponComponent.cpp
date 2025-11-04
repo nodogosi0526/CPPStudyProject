@@ -229,7 +229,15 @@ void UTP_WeaponComponent::Fire()
 
 	FVector CameraLocation;
 	FRotator CameraRotation;
-	PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
+  if (PlayerController)
+  {
+	  PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
+  }
+  else
+  {
+    UE_LOG(LogTemp, Warning, TEXT("Fire: no PlayerController."));
+    OwningCharacter->GetActorEyesViewPoint(CameraLocation, CameraRotation);
+  }
 
 	const FVector TraceStart = CameraLocation;
 	const FVector ShotDirection = CameraRotation.Vector().GetSafeNormal();
