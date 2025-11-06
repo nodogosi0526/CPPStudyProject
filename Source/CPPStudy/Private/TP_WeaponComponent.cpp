@@ -236,7 +236,7 @@ void UTP_WeaponComponent::Fire()
   else
   {
     UE_LOG(LogTemp, Warning, TEXT("Fire: no PlayerController."));
-    OwningCharacter->GetActorEyesViewPoint(CameraLocation, CameraRotation);
+    MyOwner->GetActorEyesViewPoint(CameraLocation, CameraRotation);
   }
 
 	const FVector TraceStart = CameraLocation;
@@ -264,9 +264,12 @@ void UTP_WeaponComponent::Fire()
 
 	if (bHit && HitResult.GetActor())
 	{
-		AActor* HitActor = HitResult.GetActor();
-
-		// Damage
+    // Damage
+    AActor* HitActor = HitResult.GetActor();
+    if (HitActor)
+    {
+      UGameplayStatics::ApplyPointDamage(HitActor, OwningWeapon->Damage, HitResult.ImpactNormal, HitResult, PlayerController, this, nullptr);
+    }
 
     // Impact Effect
 
