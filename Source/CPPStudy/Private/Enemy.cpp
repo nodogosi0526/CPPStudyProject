@@ -75,14 +75,22 @@ void AEnemy::Attack()
 	}
 }
 
-void AEnemy::TakeDamage(float TakenDamage)
+void AEnemy::TakeDamage(float DamageAmount,
+                        const FDamageEvent& DamageEvent,
+                        AController* EventInstigator,
+                        AActor* DamageCauser)
 {
+	if (EnemyState == EEnemyState::EES_Dead || EnemyState == EEnemyState::EES_Pooled || DamageAmount <= 0.f) return;
 
-	if (EnemyState == EEnemyState::EES_Dead || EnemyState == EEnemyState::EES_Pooled) return;
+  const float OldHP = CurrentHealth;
+	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.f, MaxHealth);
 
-	CurrentHealth = FMath::Clamp(CurrentHealth - TakenDamage, 0.0f, MaxHealth);
+  UE_LOG(LogTemp, Log, TEXT("%s took %.2f (%.2f -> %.2f). Causer=%s, Instigator=%s"),
+        *GetName(), DamageAmount, OldHP, CurrentHealth,
+        *GetNameSafe(DamageCauser),
+        EventInstigator ? *GetNameSafe(EventInstigator->GetPawn()) : TEXT("None"));
 
-	if (CurrentHealth <= 0.0f)
+	if (CurrentHealth <= 0.f)
 	{
 		Die();
 	}

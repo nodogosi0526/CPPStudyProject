@@ -74,7 +74,12 @@ public:
 	// Combat methods
 	void Attack();
 
-	void TakeDamage(float TakenDamage);
+  virtual float TakeDamage(
+		float DamageAmount,
+		struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator,
+		AActor* DamageCauser
+	) override;
 
 	// Death handling methods
 	void Die();

@@ -236,7 +236,7 @@ void UTP_WeaponComponent::Fire()
   else
   {
     UE_LOG(LogTemp, Warning, TEXT("Fire: no PlayerController."));
-    MyOwner->GetActorEyesViewPoint(CameraLocation, CameraRotation);
+    OwningWeapon->GetActorEyesViewPoint(CameraLocation, CameraRotation);
   }
 
 	const FVector TraceStart = CameraLocation;
@@ -268,11 +268,10 @@ void UTP_WeaponComponent::Fire()
     AActor* HitActor = HitResult.GetActor();
     if (HitActor)
     {
-      UGameplayStatics::ApplyPointDamage(HitActor, OwningWeapon->Damage, HitResult.ImpactNormal, HitResult, PlayerController, this, nullptr);
+      UGameplayStatics::ApplyPointDamage(HitActor, OwningWeapon->Damage, ShotDirection, HitResult, PlayerController, OwningWeapon, UDamageType::StaticClass());
     }
 
     // Impact Effect
-
 		if (OwningWeapon->ImpactEffect)
 		{
 			UNiagaraFunctionLibrary::SpawnSystemAtLocation(
