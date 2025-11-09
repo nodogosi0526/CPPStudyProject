@@ -75,13 +75,25 @@ void AEnemy::Attack()
 	}
 }
 
-void AEnemy::TakeDamage(float DamageAmount,
+float AEnemy::TakeDamage(float DamageAmount,
                         const FDamageEvent& DamageEvent,
                         AController* EventInstigator,
                         AActor* DamageCauser)
 {
-	if (EnemyState == EEnemyState::EES_Dead || EnemyState == EEnemyState::EES_Pooled || DamageAmount <= 0.f) return;
+	if (EnemyState == EEnemyState::EES_Dead || EnemyState == EEnemyState::EES_Pooled || DamageAmount <= 0.f) return 0.f;
 
+  // 1) Hit location/normal (handles PointDamage path: WeaponComponent passes Hit data)
+	FVector HitLoc = GetActorLocation();
+	FVector HitNormal = GetActorUpVector();
+
+  if (DamageEvent.GetTypeID() == FPointDamageEvent::ClassID)
+	{
+		const FPointDamageEvent* PDE = static_cast<const FPointDamageEvent*>(&DamageEvent);
+		HitLocation = PDE->HitInfo.ImpactPoint;
+		HitNormal = PDE->HitInfo.ImpactNormal;
+	}
+
+  // 2) Apply damage
   const float OldHP = CurrentHealth;
 	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.f, MaxHealth);
 
@@ -90,17 +102,25 @@ void AEnemy::TakeDamage(float DamageAmount,
         *GetNameSafe(DamageCauser),
         EventInstigator ? *GetNameSafe(EventInstigator->GetPawn()) : TEXT("None"));
 
+  // 3) Play damage effect
+  if (EnemyDamageEffect)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EnemyDamageEffect, HitLocation, HitNormal.Rotation());
+	}
+
+  // 4) Play damage sound
+  if (EnemyDamageSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), EnemyDamageSound, GetActorLocation());
+	}
+
+  // 5) Check if enemy is dead
 	if (CurrentHealth <= 0.f)
 	{
 		Die();
 	}
-	else
-	{
-		if (EnemyDamageSound != nullptr)
-		{
-			UGameplayStatics::PlaySoundAtLocation(GetWorld(), EnemyDamageSound, GetActorLocation());
-		}
-	}
+
+  return DamageAmount;
 }
 
 void AEnemy::Die()
@@ -228,15 +248,58 @@ void AEnemy::HandleOnMontageEnded(UAnimMontage* EndedMontage, bool bInterrupted)
 
 }
 
-void AEnemy::OnRightHandOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AEnemy::OnRightHandOverlap(UPrimitiveComponent* OverlappedComponent,
+                                AActor* OtherActor,
+                                UPrimitiveComponent* OtherComp,
+                                int32 OtherBodyIndex,
+                                bool bFromSweep,
+                                const FHitResult& SweepResult)
 {
+  // Validate target
 	ACPPStudyCharacter* Player = Cast<ACPPStudyCharacter>(OtherActor);
+  if (!Player || Player == this) return;
 
-	if (Player)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Right hand hit Player!!"));
-		Player->TakeDamage(10.0f);
-		RightHandCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	}
+  // Prevent multiple hits (one hit per swing)
+  if (bHasDealtDamageThisSwing) return;
+  bHasDealtDamageThisSwing = true;
+
+  // Safety check before applying damage
+  if (MeleeDamage <= 0.f) return;
+    TSubclassOf<UDamageType> DamageType = MeleeDamageType ? MeleeDamageType : UDamageType::StaticClass();
+
+  // InstigatorController
+  AController* InstigatorController = (GetController() ? GetController() : GetInstigatorController());
+
+  // Determine hit location and direction
+  // Overlap events are not always from Sweep, so provide fallback values
+  FVector ImpactPoint   = bFromSweep ? SweepResult.ImpactPoint   : Player->GetActorLocation();
+  FVector ImpactNormal  = bFromSweep ? SweepResult.ImpactNormal  : -GetActorForwardVector();
+  if (ImpactNormal.IsNearlyZero()) ImpactNormal = -GetActorForwardVector();
+
+  // Attack Vector
+  const FVector ShotDir = (Player->GetActorLocation() - SweepResult.ImpactPoint).GetSafeNormal();
+
+  // Damage
+  FHitResult Hit = SweepResult;
+  if (!bFromSweep)
+  {
+      Hit.ImpactPoint  = ImpactPoint;
+      Hit.ImpactNormal = ImpactNormal;
+      Hit.Location     = ImpactPoint;
+  }
+
+  UGameplayStatics::ApplyPointDamage(Player,
+                                    MeleeDamage,
+                                    ShotDir,
+                                    Hit,
+                                    InstigatorController,
+                                    this,
+                                    MeleeDamageType
+  );
+
+	RightHandCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+  UE_LOG(LogTemp, Verbose, TEXT("Melee hit %s at %s"),
+  *GetNameSafe(Player), *SweepResult.ImpactPoint.ToString());
 }
 

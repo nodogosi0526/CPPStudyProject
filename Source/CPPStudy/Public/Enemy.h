@@ -8,6 +8,7 @@ class AEnemyManager;
 #include "Components/BoxComponent.h"
 #include "EnemyTypes.h"
 #include "GameFramework/Character.h"
+#include "NiagaraSystem.h"
 #include "Enemy.generated.h"
 
 UCLASS()
@@ -47,6 +48,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AAA | Sound")
 	USoundBase* EnemyDamageSound;
 
+  // References to effects
+  UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AAA | Effects")
+	TObjectPtr<UNiagaraSystem> EnemyDamageEffect;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AAA | Combat")
 	TObjectPtr<UBoxComponent> RightHandCollision;
@@ -59,6 +64,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AAA | Combat")
 	float CurrentHealth;
 
+  UPROPERTY(EditDefaultOnly, Category = "AAA | Melee")
+  float MeleeDamage = 10.0f;
+
+  UPROPERTY(EditDefaultOnly, Category = "AAA | Melee")
+  TSubclassOf<UDamageType> MeleeDamageType = UDamageType::StaticClass();
+
+  UPROPERTY(VisibleAnywhere, Category="AAA | Melee")
+  bool bHasDealtDamageThisSwing = false;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AAA | State")
 	EEnemyState EnemyState;
 
@@ -70,6 +84,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "AAA | Pooling")
 	void Reactivate(const FVector& NewLocation);
+
+  UFUNCTION()
+  void ResetMeleeWindow() { bHasDealtDamageThisSwing = false; }
 
 	// Combat methods
 	void Attack();
