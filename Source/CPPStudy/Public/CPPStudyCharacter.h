@@ -75,11 +75,14 @@ public:
 
 	// --- �̗͊֘A ---
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AAA | Health")
 	float CurrentHealth;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AAA | Health")
 	float MaxHealth = 100.0f;
+
+  UPROPERTY(EditAnywhere, Category="AAA | Health")
+  bool bGodMode = false;
 
 	// --- �f���Q�[�g ---
 
@@ -90,8 +93,10 @@ public:
 	FOnAmmoChangedSignature OnAmmoChanged;
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "AAA | Health")
-	void TakeDamage(float TakenDamage);
+  virtual float TakeDamage(float DamageAmount,
+                          struct FDamageEvent const& DamageEvent,
+                          class AController* EventInstigator,
+                          class AActor* DamageCauser) override;
 
 	UFUNCTION(BlueprintPure, Category = "AAA | Weapon")
 	int32 GetCurrentAmmo() const;

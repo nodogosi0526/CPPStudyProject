@@ -140,8 +140,36 @@ void ACPPStudyCharacter::EquipWeapon(TSubclassOf<AWeapon> WeaponClass)
 	}
 }
 
-void ACPPStudyCharacter::TakeDamage(float TakenDamage)
+float ACPPStudyCharacter::TakeDamage(float DamageAmount,
+                                    const FDamageEvent& DamageEvent,
+                                    AController* EventInstigator,
+                                    AActor* DamageCauser)
 {
+  // Ignore damage if damage amount is 0 or less, or if god mode is enabled
+  if (DamageAmout <= 0.f || bGodMode)
+  {
+    return 0.f;
+  }
+
+  // Hit location/normal
+  FVector ImpactPoint = GetActorLocation();
+  FVector ImpactNormal = GetActorUpVector();
+
+  if (DamageEvent.GetTypeID() == FPointDamageEvent::ClassID)
+  {
+    cosnt FPointDamageEvent* PDE = static_cast<const FPointDamageEvent*>(&DamageEvent);
+    ImpactPoint = PDE.HitInfo.ImpactPoint;
+    ImpactNormal = PDE->HitInfo.ImpactNormal;
+  }
+  else if (DamageEvent.GetTypeID() == FRadialDamageEvent::ClassID)
+    {
+        const FRadialDamageEvent* RDE = static_cast<const FRadialDamageEvent*>(&DamageEvent);
+        // Use direction from explosion center to self as normal substitute
+        ImpactNormal = (GetActorLocation() - RDE->Origin).GetSafeNormal();
+        ImpactPoint  = GetActorLocation();
+    }
+    if (ImpactNormal.IsNearlyZero()) ImpactNormal = GetActorUpVector();
+
 	CurrentHealth = FMath::Clamp(CurrentHealth - TakenDamage, 0.0f, MaxHealth);
 	UE_LOG(LogTemplateCharacter, Log, TEXT("%s took %f damage. New health %f"), *GetName(), TakenDamage, CurrentHealth);
 
