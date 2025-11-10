@@ -82,7 +82,7 @@ float AEnemy::TakeDamage(float DamageAmount,
 {
 	if (EnemyState == EEnemyState::EES_Dead || EnemyState == EEnemyState::EES_Pooled || DamageAmount <= 0.f) return 0.f;
 
-  // 1) Hit location/normal (handles PointDamage path: WeaponComponent passes Hit data)
+  // Hit location/normal (handles PointDamage path: WeaponComponent passes Hit data)
 	FVector HitLoc = GetActorLocation();
 	FVector HitNormal = GetActorUpVector();
 
@@ -93,7 +93,7 @@ float AEnemy::TakeDamage(float DamageAmount,
 		HitNormal = PDE->HitInfo.ImpactNormal;
 	}
 
-  // 2) Apply damage
+  // Apply damage
   const float OldHP = CurrentHealth;
 	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.f, MaxHealth);
 
@@ -102,19 +102,19 @@ float AEnemy::TakeDamage(float DamageAmount,
         *GetNameSafe(DamageCauser),
         EventInstigator ? *GetNameSafe(EventInstigator->GetPawn()) : TEXT("None"));
 
-  // 3) Play damage effect
+  // Play damage effect
   if (EnemyDamageEffect)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EnemyDamageEffect, HitLocation, HitNormal.Rotation());
 	}
 
-  // 4) Play damage sound
+  // Play damage sound
   if (EnemyDamageSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), EnemyDamageSound, GetActorLocation());
 	}
 
-  // 5) Check if enemy is dead
+  // Check if enemy is dead
 	if (CurrentHealth <= 0.f)
 	{
 		Die();
@@ -276,8 +276,13 @@ void AEnemy::OnRightHandOverlap(UPrimitiveComponent* OverlappedComponent,
   FVector ImpactNormal  = bFromSweep ? SweepResult.ImpactNormal  : -GetActorForwardVector();
   if (ImpactNormal.IsNearlyZero()) ImpactNormal = -GetActorForwardVector();
 
-  // Attack Vector
-  const FVector ShotDir = (Player->GetActorLocation() - SweepResult.ImpactPoint).GetSafeNormal();
+  // Attack direction (incoming). Prefer opposite of impact normal; fallback to velocity or attacker->target vector.
+  FVector ShotDir = (-ImpactNormal).GetSafeNormal();
+  if (ShotDir.IsNearlyZero())
+  {
+    const FVector VelDir = GetVelocity().GetSafeNormal();
+    ShotDir = !VelDir.IsNearlyZero() ? VelDir : (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+  }
 
   // Damage
   FHitResult Hit = SweepResult;

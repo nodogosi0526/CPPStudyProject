@@ -168,7 +168,7 @@ float ACPPStudyCharacter::TakeDamage(float DamageAmount,
         ImpactNormal = (GetActorLocation() - RDE->Origin).GetSafeNormal();
         ImpactPoint  = GetActorLocation();
     }
-    if (ImpactNormal.IsNearlyZero()) ImpactNormal = GetActorUpVector();
+  if (ImpactNormal.IsNearlyZero()) ImpactNormal = GetActorUpVector();
 
 	CurrentHealth = FMath::Clamp(CurrentHealth - TakenDamage, 0.0f, MaxHealth);
 	UE_LOG(LogTemplateCharacter, Log, TEXT("%s took %f damage. New health %f"), *GetName(), TakenDamage, CurrentHealth);
