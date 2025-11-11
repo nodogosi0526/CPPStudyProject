@@ -8,6 +8,7 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/EngineTypes.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -36,7 +37,14 @@ void AEnemy::BeginPlay()
 	CurrentHealth = MaxHealth;
 
 	RightHandCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::OnRightHandOverlap);
-	GetMesh()->GetAnimInstance()->OnMontageEnded.AddDynamic(this, &AEnemy::HandleOnMontageEnded);
+
+    if (USkeletalMeshComponent* MeshComp = GetMesh())
+    {
+        if (UAnimInstance* AnimInst = MeshComp->GetAnimInstance())
+        {
+            AnimInst->OnMontageEnded.AddDynamic(this, &AEnemy::HandleOnMontageEnded);
+        }
+    }
 }
 
 // Called every frame
@@ -89,7 +97,7 @@ float AEnemy::TakeDamage(float DamageAmount,
   if (DamageEvent.GetTypeID() == FPointDamageEvent::ClassID)
 	{
 		const FPointDamageEvent* PDE = static_cast<const FPointDamageEvent*>(&DamageEvent);
-		HitLocation = PDE->HitInfo.ImpactPoint;
+		HitLoc = PDE->HitInfo.ImpactPoint;
 		HitNormal = PDE->HitInfo.ImpactNormal;
 	}
 
@@ -132,13 +140,20 @@ void AEnemy::Die()
 
 	if (AAIController* AIController = Cast<AAIController>(GetController()))
 	{
-		AIController->GetBrainComponent()->StopLogic(TEXT("Died"));
+        if (UBrainComponent* Brain = AIController->GetBrainComponent())
+        {
+            Brain->StopLogic(TEXT("Died"));
+        }
 
-		if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
-		{
-			MoveComp->StopMovementImmediately();
-		}
-		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        if (UCharacterMovementComponent* MoveComp = GetCharacterMovement())
+        {
+            MoveComp->StopMovementImmediately();
+        }
+
+        if (UCapsuleComponent* Capsule = GetCapsuleComponent())
+        {
+            Capsule->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        }
 	}
 
 	// Play death sounds
@@ -257,7 +272,7 @@ void AEnemy::OnRightHandOverlap(UPrimitiveComponent* OverlappedComponent,
 {
   // Validate target
 	ACPPStudyCharacter* Player = Cast<ACPPStudyCharacter>(OtherActor);
-  if (!Player || Player == this) return;
+  if (!Player || Cast<AActor>(Player) == this) return;
 
   // Prevent multiple hits (one hit per swing)
   if (bHasDealtDamageThisSwing) return;
@@ -265,7 +280,7 @@ void AEnemy::OnRightHandOverlap(UPrimitiveComponent* OverlappedComponent,
 
   // Safety check before applying damage
   if (MeleeDamage <= 0.f) return;
-    TSubclassOf<UDamageType> DamageType = MeleeDamageType ? MeleeDamageType : UDamageType::StaticClass();
+  TSubclassOf<UDamageType> DamageType = MeleeDamageType ? MeleeDamageType : UDamageType::StaticClass();
 
   // InstigatorController
   AController* InstigatorController = (GetController() ? GetController() : GetInstigatorController());
