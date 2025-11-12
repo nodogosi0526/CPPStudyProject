@@ -15,28 +15,28 @@ AEnemyManager::AEnemyManager()
     EnemiesSpawnedThisWave = 0;
 }
 
-// BeginPlay: �Q�[���J�n���̏���
+// BeginPlay: logic executed when the game starts
 void AEnemyManager::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 1. �G���v�[������
+    // 1. Create the enemy pool
     for (int32 i = 0; i < PoolSize; ++i)
     {
         if (AEnemy* PooledEnemy = GetWorld()->SpawnActor<AEnemy>(EnemyClass, FVector::ZeroVector, FRotator::ZeroRotator))
         {
-            PooledEnemy->Deactivate(); // �����ɔ�\���ɂ���
-            PooledEnemy->SetEnemyManager(this); // �i�ߊ����Z�b�g�I
+            PooledEnemy->Deactivate(); // Put the enemy into its inactive state
+            PooledEnemy->SetEnemyManager(this); // Register this manager
             EnemyPool.Add(PooledEnemy);
         }
     }
 
-    // 2. �����҂��Ă���ŏ��̃E�F�[�u���J�n
+    // 2. Start the first wave after a brief delay
     FTimerHandle StartGameTimer;
     GetWorldTimerManager().SetTimer(StartGameTimer, this, &AEnemyManager::StartNextWave, 3.0f, false);
 }
 
-// OnEnemyKilled: ���m����̎��S�񍐂��󂯂��Ƃ��̏���
+// OnEnemyKilled: handle the logic when an enemy is defeated
 void AEnemyManager::OnEnemyKilled(AEnemy* KilledEnemy)
 {
     EnemiesKilledThisWave++;
@@ -51,7 +51,7 @@ void AEnemyManager::OnEnemyKilled(AEnemy* KilledEnemy)
     }
 }
 
-// StartNextWave: ���̃E�F�[�u���J�n����
+// StartNextWave: begin the next wave
 void AEnemyManager::StartNextWave()
 {
     if (WaveSettings.IsValidIndex(CurrentWave))
@@ -67,7 +67,7 @@ void AEnemyManager::StartNextWave()
     }
     else
     {
-        // �Q�[���N���A�����Ȃ�
+        // No more waves remain; the game is effectively cleared
     }
 }
 
@@ -86,14 +86,14 @@ void AEnemyManager::CheckAndSpawnEnemies()
         }
     }
 
-    // 1. ���̃E�F�[�u�ŁA���Ɖ��̃X�|�[���ł���g���c���Ă��邩�H
+    // 1. Remaining number of enemies that still need to spawn this wave
     const int32 EnemiesAvailableToSpawn = CurrentSettings.EnemiesToSpawn - EnemiesSpawnedThisWave;
-    // 2. ��ʏ�ɂ́A���Ɖ��̃X�|�[���ł���󂫂����邩�H
+    // 2. Available slots based on how many enemies are currently active
     const int32 ScreenSlotsAvailable = CurrentSettings.MaxEnemiesOnScreen - CurrentAliveEnemies;
-    // 3. ���ۂɃX�|�[�������鐔�́A�u�X�|�[���ł���g�v�Ɓu��ʂ̋󂫁v�̏��Ȃ���
+    // 3. Spawn the minimum of the remaining enemies and open slots
     const int32 NumToSpawn = FMath::Min(EnemiesAvailableToSpawn, ScreenSlotsAvailable);
 
-    // �X�|�[��������ׂ�����1�̈ȏア��Ȃ���s
+    // If nothing should be spawned, exit early
     if (NumToSpawn > 0)
     {
         if (bIsNewWave)
@@ -126,7 +126,7 @@ void AEnemyManager::CheckAndSpawnEnemies()
     }
 }
 
-// GetPooledEnemy: �v�[������g����G��T���ĕԂ�
+// GetPooledEnemy: find and return an available pooled enemy
 AEnemy* AEnemyManager::GetPooledEnemy()
 {
     for (AEnemy* Enemy : EnemyPool)
@@ -136,6 +136,6 @@ AEnemy* AEnemyManager::GetPooledEnemy()
             return Enemy;
         }
     }
-    return nullptr; // �v�[���Ɏg����G�����Ȃ��ꍇ
+    return nullptr; // Return null if no pooled enemy is available
 }
 

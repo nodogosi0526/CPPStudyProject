@@ -25,7 +25,7 @@ class CPPSTUDY_API AEnemyManager : public AActor
 public:
     AEnemyManager();
 
-    // ������ �G�����񂾂Ƃ��ɌĂ΂����J�֐� ������
+    // Function called whenever an enemy has been killed
     void OnEnemyKilled(AEnemy* KilledEnemy);
 
     UPROPERTY(BlueprintAssignable, Category = "AAA | Events")
@@ -34,26 +34,26 @@ public:
 protected:
     virtual void BeginPlay() override;
 
-    // --- �v�[���֘A ---
+    // --- Pooling ---
     UPROPERTY(EditAnywhere, Category = "AAA | Pooling")
-    TSubclassOf<AEnemy> EnemyClass; // �v�[������G��BP�N���X
+    TSubclassOf<AEnemy> EnemyClass; // Enemy Blueprint class used for pooling
 
     UPROPERTY(EditAnywhere, Category = "AAA | Pooling")
-    int32 PoolSize = 20; // �ŏ��ɗp�ӂ��Ă����G�̑���
+    int32 PoolSize = 20; // Number of enemies preallocated in the pool
 
-    // --- �X�|�[���n�_ ---
-    // ����̃A�C�f�A�I���x���ɔz�u����Target Point�Ȃǂ��w��ł���
+    // --- Spawning ---
+    // Actors placed in the level (such as Target Points) that mark spawn locations
     UPROPERTY(EditAnywhere, Category = "AAA | Spawning")
     TArray<AActor*> SpawnLocations;
 
-    // --- �E�F�[�u�Ǘ� ---
+    // --- Wave Management ---
     UPROPERTY(EditAnywhere, Category = "AAA | Waves")
-    TArray<FWaveSettings> WaveSettings; // �S�E�F�[�u�̐ݒ�
+    TArray<FWaveSettings> WaveSettings; // Settings for each wave
 
 private:
-    // --- �����ϐ� ---
+    // --- Internal Variables ---
     UPROPERTY()
-    TArray<AEnemy*> EnemyPool; // ��A�N�e�B�u�ȓG��ێ�����v�[��
+    TArray<AEnemy*> EnemyPool; // Pool storing reusable enemy instances
 
     bool bIsNewWave;
 
@@ -61,8 +61,8 @@ private:
     int32 EnemiesKilledThisWave;
     int32 EnemiesSpawnedThisWave;
 
-    // --- �����֐� ---
-    AEnemy* GetPooledEnemy(); // �v�[�������A�N�e�B�u�ȓG���擾
+    // --- Internal Functions ---
+    AEnemy* GetPooledEnemy(); // Retrieves an available enemy from the pool
     void StartNextWave();
     void CheckAndSpawnEnemies();
 };

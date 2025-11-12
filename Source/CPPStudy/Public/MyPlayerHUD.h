@@ -12,7 +12,7 @@ class CPPSTUDY_API UMyPlayerHUD : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-    // �e�����X�V����֐�
+	// Function used to update the ammo display
     UFUNCTION(BlueprintCallable)
     void UpdateAmmoText(int32 CurrentAmmo, int32 TotalAmmo);
 
@@ -25,7 +25,7 @@ public:
 protected:
     virtual void NativeConstruct() override;
 
-    // Ammo��\������TextBlock�ɃA�N�Z�X���邽�߂̕ϐ�
+    // Variable used to access the TextBlock that displays ammo
     UPROPERTY(meta = (BindWidget))
     class UTextBlock* Text_Ammo;
 

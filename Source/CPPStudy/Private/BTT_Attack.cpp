@@ -13,9 +13,9 @@ UBTT_Attack::UBTT_Attack(FObjectInitializer const& a_pObjectInit)
 {
 	NodeName = TEXT("Attack");
 
-	// ������ Most Important Fix ������
-// Setting this to true creates a separate instance (object) of this task for each AI that executes it.
-// This prevents member variables such as MyOwnerComp from being overwritten by other AIs.
+	// Important: apply the "Most Important Fix"
+	// Setting this to true creates a separate instance (object) of this task for each AI that executes it.
+	// This prevents member variables such as MyOwnerComp from being overwritten by other AIs.
 
 	bCreateNodeInstance = true;
 }

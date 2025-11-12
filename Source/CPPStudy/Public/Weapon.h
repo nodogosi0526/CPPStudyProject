@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
-// �O���錾
+// Forward declaration
 class UStaticMeshComponent;
 class UTP_WeaponComponent;
 class UAnimMontage;
@@ -35,7 +35,7 @@ protected:
 
 public:
 
-	// ����ŗL�f�[�^
+	// Parametre
 
 	UPROPERTY(EditDefaultsOnly, Category = "AAA | Animation")
 	TObjectPtr<UAnimMontage> FireMontage;
@@ -73,7 +73,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "AAA | Combat")
 	float MaxRange = 500.0f;
 
-	// �e��f�[�^
+	// Ammo
 	UPROPERTY(EditDefaultsOnly, Category = "AAA | Ammo")
 	int32 MagazineCapacity = 30;
 

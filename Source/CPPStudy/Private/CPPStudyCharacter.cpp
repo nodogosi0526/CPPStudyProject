@@ -183,7 +183,7 @@ float ACPPStudyCharacter::TakeDamage(float DamageAmount,
 	// Death handling
 	if (CurrentHealth <= 0)
 	{
-		// ���������� ���O�R�F���S���������s����邱�Ƃ��m�F ����������
+		// Confirm the death, log it, and restart the level
 		UE_LOG(LogTemp, Error, TEXT("%s has died! Restarting level..."), *GetName());
 		UGameplayStatics::OpenLevel(GetWorld(), FName(GetWorld()->GetName()), true);
 	}
@@ -191,7 +191,7 @@ float ACPPStudyCharacter::TakeDamage(float DamageAmount,
     return DamageAmount;
 }
 
-// ���͏��� -> ����R���|�[�l���g�ւ̈Ϗ� 
+// Existing implementation delegates to the weapon component 
 
 void ACPPStudyCharacter::StartFire()
 {
@@ -217,7 +217,7 @@ void ACPPStudyCharacter::StartReload()
 	}
 }
 
-// �Q�b�^�[�֐��ƃC�x���g�n���h��
+// Getter functions and event handlers
 
 int32 ACPPStudyCharacter::GetCurrentAmmo() const
 {
@@ -245,7 +245,7 @@ void ACPPStudyCharacter::HandleWeaponAmmoChanged(int32 NewCurrentAmmo, int32 New
 	}
 }
 
-// �L�����N�^�[�̊�{���� (�ړ��E���_)
+// Character basic input (movement and look)
 
 void ACPPStudyCharacter::Move(const FInputActionValue& Value)
 {

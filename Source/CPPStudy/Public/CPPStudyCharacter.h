@@ -18,9 +18,9 @@ class UTP_WeaponComponent;
 class UAnimMontage;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
-// HP�ύX�ʒm�p�f���Q�[�g (float: ����HP, float: �ő�HP)
+// Delegate used to notify HP changes (float: Current HP, float: Max HP)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHealthChangedSignature, float, CurrentHealth, float, MaxHealth);
-// �e�򐔕ύX�ʒm�p�f���Q�[�g (int32: ���݂̒e��, int32: ���\���e��)
+// Delegate used to notify ammo changes (int32: Current ammo, int32: Total ammo)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoChangedSignature, int32, CurrentAmmo, int32, TotalAmmo);
 
 UCLASS(config=Game)
@@ -59,21 +59,21 @@ class ACPPStudyCharacter : public ACharacter
 public:
 	ACPPStudyCharacter();
 
-	// --- ����֘A ---
+	// --- Weapon Related ---
 
-	/* ���퐶�����̐݌v�}*/
+	/* Class of the initial weapon to spawn */
 	UPROPERTY(EditDefaultsOnly, Category = "AAA | Weapon")
 	TSubclassOf<AWeapon> InitialWeaponClass;
 
-	/* ������������ւ̃|�C���^*/
+	/* Pointer to the weapon currently equipped */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "AAA | Weapon")
 	TObjectPtr<AWeapon> EquippedWeapon;
 
-	/* ������������̋@�\�R���|�[�l���g�ւ̃|�C���^*/
+	/* Pointer to the weapon component of the equipped weapon */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "AAA | Weapon")
 	TObjectPtr<UTP_WeaponComponent> EquippedWeaponComponent;
 
-	// --- �̗͊֘A ---
+	// --- Health ---
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AAA | Health")
 	float CurrentHealth;
@@ -84,7 +84,7 @@ public:
   UPROPERTY(EditAnywhere, Category="AAA | Health")
   bool bGodMode = false;
 
-	// --- �f���Q�[�g ---
+	// --- Delegates ---
 
 	UPROPERTY(BlueprintAssignable, Category = "AAA | Events")
 	FOnHealthChangedSignature OnHealthChanged;

@@ -21,10 +21,10 @@ struct FWaveSettings
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = " AAA | Wave Settings")
-    int32 EnemiesToSpawn; // ���̃E�F�[�u�ŃX�|�[�������鑍��
+    int32 EnemiesToSpawn; // Number of enemies to spawn in this wave
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = " AAA | Wave Settings")
-    int32 MaxEnemiesOnScreen; // �����ɉ�ʏ�ɏo���ł���ő吔
+    int32 MaxEnemiesOnScreen; // Maximum number of enemies allowed on screen simultaneously
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = " AAA | Wave Settings")
     float MinMoveSpeed = 100.0f;

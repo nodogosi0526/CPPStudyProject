@@ -26,7 +26,7 @@ AEnemy::AEnemy()
 	RightHandCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("RightHandCollision"));
 	RightHandCollision->SetupAttachment(GetMesh(), FName("RightHandSocket"));
 
-	// �ŏ��͓����蔻��𖳌��ɂ��Ă���
+	// Start with collision disabled by default
 	RightHandCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	RightHandCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
 	RightHandCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
@@ -193,7 +193,7 @@ void AEnemy::Deactivate()
 {
 	SetEnemyState(EEnemyState::EES_Pooled);
 
-	// Actor���\���ɂ��A�������ׂ��[���ɂ���
+	// Hide the actor and disable it in the world
 	SetActorHiddenInGame(true);
 	SetActorTickEnabled(false);
 	SetActorEnableCollision(false);
@@ -203,21 +203,21 @@ void AEnemy::Reactivate(const FVector& NewLocation)
 {
 	if (EnemyState != EEnemyState::EES_Pooled) return;
 
-	// --- ��Ԃ̃��Z�b�g ---
+	// --- Reset state ---
 	SetEnemyState(EEnemyState::EES_Spawning);
 	CurrentHealth = MaxHealth;
 
-	// --- ������Ԃ̃��Z�b�g ---
+	// --- Reset transform ---
 	SetActorLocation(NewLocation);
 	SetActorHiddenInGame(false);
 	SetActorTickEnabled(true);
 	ResetCollisionAndMovement();
 
-	// --- AI�̃��Z�b�g ---
+	// --- Reset AI ---
 	ResetAI();
 
-	// --- �o�ꉉ�o��Blueprint�Ɉ˗� ---
-	PlayDissolveFX(true); // true = �t�Đ�
+	// --- Trigger dissolve effect exposed to Blueprint ---
+	PlayDissolveFX(true); // true = fade in
 }
 
 void AEnemy::SetEnemyState(EEnemyState NewState)
@@ -289,8 +289,20 @@ void AEnemy::OnRightHandOverlap(UPrimitiveComponent* OverlappedComponent,
 
   // Determine hit location and direction
   // Overlap events are not always from Sweep, so provide fallback values
-  FVector ImpactPoint   = bFromSweep ? SweepResult.ImpactPoint   : Player->GetActorLocation();
-  FVector ImpactNormal  = bFromSweep ? SweepResult.ImpactNormal  : -GetActorForwardVector();
+  FVector ImpactPoint;
+  FVector ImpactNormal;
+
+  if (bFromSweep)
+  {
+      ImpactPoint = SweepResult.ImpactPoint;
+      ImpactNormal = SweepResult.ImpactNormal;
+  }
+  else
+  {
+      ImpactPoint = Player->GetActorLocation();
+      ImpactNormal = -GetActorForwardVector();
+  }
+
   if (ImpactNormal.IsNearlyZero()) ImpactNormal = -GetActorForwardVector();
 
   // Attack direction (incoming). Prefer opposite of impact normal; fallback to velocity or attacker->target vector.
