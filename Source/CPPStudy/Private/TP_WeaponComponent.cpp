@@ -314,7 +314,7 @@ void UTP_WeaponComponent::OnReloadMontageEnded(UAnimMontage* Montage, bool bInte
 {
   if (!bInterrupted)
   {
-    FinishRelaod();
+    FinishReload();
   }
   else
   {

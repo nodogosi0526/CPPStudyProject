@@ -8,6 +8,8 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/DamageEvents.h"
+#include "Engine/EngineTypes.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
@@ -146,7 +148,7 @@ float ACPPStudyCharacter::TakeDamage(float DamageAmount,
                                     AActor* DamageCauser)
 {
   // Ignore damage if damage amount is 0 or less, or if god mode is enabled
-  if (DamageAmout <= 0.f || bGodMode)
+  if (DamageAmount <= 0.f || bGodMode)
   {
     return 0.f;
   }
@@ -155,13 +157,13 @@ float ACPPStudyCharacter::TakeDamage(float DamageAmount,
   FVector ImpactPoint = GetActorLocation();
   FVector ImpactNormal = GetActorUpVector();
 
-  if (DamageEvent.GetTypeID() == FPointDamageEvent::ClassID)
+  if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
   {
-    cosnt FPointDamageEvent* PDE = static_cast<const FPointDamageEvent*>(&DamageEvent);
-    ImpactPoint = PDE.HitInfo.ImpactPoint;
+    const FPointDamageEvent* PDE = static_cast<const FPointDamageEvent*>(&DamageEvent);
+    ImpactPoint = PDE->HitInfo.ImpactPoint;
     ImpactNormal = PDE->HitInfo.ImpactNormal;
   }
-  else if (DamageEvent.GetTypeID() == FRadialDamageEvent::ClassID)
+  else if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
     {
         const FRadialDamageEvent* RDE = static_cast<const FRadialDamageEvent*>(&DamageEvent);
         // Use direction from explosion center to self as normal substitute
@@ -170,8 +172,8 @@ float ACPPStudyCharacter::TakeDamage(float DamageAmount,
     }
   if (ImpactNormal.IsNearlyZero()) ImpactNormal = GetActorUpVector();
 
-	CurrentHealth = FMath::Clamp(CurrentHealth - TakenDamage, 0.0f, MaxHealth);
-	UE_LOG(LogTemplateCharacter, Log, TEXT("%s took %f damage. New health %f"), *GetName(), TakenDamage, CurrentHealth);
+	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+	UE_LOG(LogTemplateCharacter, Log, TEXT("%s took %f damage. New health %f"), *GetName(), DamageAmount, CurrentHealth);
 
 	if (OnHealthChanged.IsBound())
 	{
@@ -185,6 +187,8 @@ float ACPPStudyCharacter::TakeDamage(float DamageAmount,
 		UE_LOG(LogTemp, Error, TEXT("%s has died! Restarting level..."), *GetName());
 		UGameplayStatics::OpenLevel(GetWorld(), FName(GetWorld()->GetName()), true);
 	}
+
+    return DamageAmount;
 }
 
 // ���͏��� -> ����R���|�[�l���g�ւ̈Ϗ� 

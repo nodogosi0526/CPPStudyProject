@@ -8,10 +8,13 @@
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/DamageEvents.h"
 #include "Engine/EngineTypes.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "Sound/SoundBase.h"
 
 // Sets default values
@@ -91,13 +94,13 @@ float AEnemy::TakeDamage(float DamageAmount,
 	if (EnemyState == EEnemyState::EES_Dead || EnemyState == EEnemyState::EES_Pooled || DamageAmount <= 0.f) return 0.f;
 
   // Hit location/normal (handles PointDamage path: WeaponComponent passes Hit data)
-	FVector HitLoc = GetActorLocation();
+	FVector HitLocation = GetActorLocation();
 	FVector HitNormal = GetActorUpVector();
 
-  if (DamageEvent.GetTypeID() == FPointDamageEvent::ClassID)
+  if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
 	{
 		const FPointDamageEvent* PDE = static_cast<const FPointDamageEvent*>(&DamageEvent);
-		HitLoc = PDE->HitInfo.ImpactPoint;
+		HitLocation = PDE->HitInfo.ImpactPoint;
 		HitNormal = PDE->HitInfo.ImpactNormal;
 	}
 
@@ -113,7 +116,7 @@ float AEnemy::TakeDamage(float DamageAmount,
   // Play damage effect
   if (EnemyDamageEffect)
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EnemyDamageEffect, HitLocation, HitNormal.Rotation());
+      UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), EnemyDamageEffect, HitLocation, HitNormal.Rotation());
 	}
 
   // Play damage sound
@@ -280,8 +283,7 @@ void AEnemy::OnRightHandOverlap(UPrimitiveComponent* OverlappedComponent,
 
   // Safety check before applying damage
   if (MeleeDamage <= 0.f) return;
-  TSubclassOf<UDamageType> DamageType = MeleeDamageType ? MeleeDamageType : UDamageType::StaticClass();
-
+  TSubclassOf<UDamageType> DamageType = MeleeDamageType ? MeleeDamageType : TSubclassOf<UDamageType>(UDamageType::StaticClass());
   // InstigatorController
   AController* InstigatorController = (GetController() ? GetController() : GetInstigatorController());
 

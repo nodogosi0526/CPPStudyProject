@@ -64,10 +64,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AAA | Combat")
 	float CurrentHealth;
 
-  UPROPERTY(EditDefaultOnly, Category = "AAA | Melee")
+  UPROPERTY(EditDefaultsOnly, Category = "AAA | Melee")
   float MeleeDamage = 10.0f;
 
-  UPROPERTY(EditDefaultOnly, Category = "AAA | Melee")
+  UPROPERTY(EditDefaultsOnly, Category = "AAA | Melee")
   TSubclassOf<UDamageType> MeleeDamageType = UDamageType::StaticClass();
 
   UPROPERTY(VisibleAnywhere, Category="AAA | Melee")
