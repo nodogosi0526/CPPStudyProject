@@ -85,7 +85,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AAA | Pooling")
 	void Reactivate(const FVector& NewLocation);
 
-  UFUNCTION()
+  UFUNCTION(BlueprintCallable, Category = "AAA | Melee")
   void ResetMeleeWindow() { bHasDealtDamageThisSwing = false; }
 
 	// Combat methods
