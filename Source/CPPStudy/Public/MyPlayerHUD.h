@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CPPStudyCharacter.h"
+#include "EnemyManager.h" 
 #include "Blueprint/UserWidget.h"
 #include "MyPlayerHUD.generated.h"
 
@@ -24,6 +26,7 @@ public:
 
 protected:
     virtual void NativeConstruct() override;
+    virtual void NativeDestruct() override;
 
     // Variable used to access the TextBlock that displays ammo
     UPROPERTY(meta = (BindWidget))
@@ -34,4 +37,7 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     class UTextBlock* WaveNumber;
+
+private:
+    UPROPERTY() TObjectPtr<ACPPStudyCharacter> ObservedCharacter = nullptr;    UPROPERTY() TObjectPtr<AEnemyManager>      ObservedEnemyManager = nullptr;
 };

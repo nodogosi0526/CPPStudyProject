@@ -5,6 +5,7 @@
 #include "CPPStudyCharacter.h"
 #include "EnemyManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Logging/LogMacros.h"
 #include "Components/TextBlock.h"
 #include "Components/ProgressBar.h"
 
@@ -13,28 +14,45 @@ void UMyPlayerHUD::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	AEnemyManager* EnemyManager = Cast<AEnemyManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AEnemyManager::StaticClass()));
+	ObservedEnemyManager = Cast<AEnemyManager>(
+        UGameplayStatics::GetActorOfClass(GetWorld(), AEnemyManager::StaticClass()));
+    if (ObservedEnemyManager)
+    {
+        ObservedEnemyManager->OnWaveChanged.AddDynamic(this, &UMyPlayerHUD::UpdateWaveCount);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("UMyPlayerHUD: EnemyManager not found!"));
+    }
 
-	if (EnemyManager)
-	{
-		EnemyManager->OnWaveChanged.AddDynamic(this, &UMyPlayerHUD::UpdateWaveCount);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("EnemyMaveger not found!"));
-	}
+    ObservedCharacter = Cast<ACPPStudyCharacter>(GetOwningPlayerPawn());
+    if (ObservedCharacter)
+    {
+        ObservedCharacter->OnAmmoChanged.AddDynamic(this, &UMyPlayerHUD::UpdateAmmoText);
+        ObservedCharacter->OnHealthChanged.AddDynamic(this, &UMyPlayerHUD::SetHealth);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("UMyPlayerHUD: PlayerCharacter not found!"));
+    }
+}
 
-	ACPPStudyCharacter*  PlayerCharacter = Cast<ACPPStudyCharacter>(GetOwningPlayerPawn());
+void UMyPlayerHUD::NativeDestruct()
+{
+    if (ObservedEnemyManager)
+    {
+        ObservedEnemyManager->OnWaveChanged.RemoveDynamic(this, &UMyPlayerHUD::UpdateWaveCount);
+        ObservedEnemyManager = nullptr;
+    }
 
-	if (PlayerCharacter)
-	{
-		PlayerCharacter->OnAmmoChanged.AddDynamic(this, &UMyPlayerHUD::UpdateAmmoText);
-		PlayerCharacter->OnHealthChanged.AddDynamic(this, &UMyPlayerHUD::SetHealth);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayerCaracter not found!"));
-	}
+    if (ObservedCharacter)
+    {
+        ObservedCharacter->OnAmmoChanged.RemoveDynamic(this, &UMyPlayerHUD::UpdateAmmoText);
+        ObservedCharacter->OnHealthChanged.RemoveDynamic(this, &UMyPlayerHUD::SetHealth);
+       ObservedCharacter = nullptr;
+    }
+
+    Super::NativeDestruct();
 }
 
 void UMyPlayerHUD::UpdateAmmoText(int32 CurrentAmmo, int32 TotalAmmo)
