@@ -28,9 +28,9 @@ void UTP_WeaponComponent::BeginPlay()
 	Super::BeginPlay();
 
 	OwningWeapon = Cast<AWeapon>(GetOwner());
+  ensureMsgf(OwningWeapon, TEXT("BeginPlay: OwningWeapon is not!."));
 	if (!OwningWeapon)
 	{
-		UE_LOG(LogTemp, Error, TEXT("BeginPlay: UTP_WeaponComponent's owner is not an AWeapon!"));
 		return;
 	}
 }
@@ -44,9 +44,9 @@ void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void UTP_WeaponComponent::InitializeAmmo(int32 InitialClipAmmo, int32 InitialTotalAmmo)
 {
+	ensureMsgf(OwningWeapon, TEXT("InitializeAmmo: UTP_WeaponComponent's owner is not an AWeapon! BeginPlay must be called first."));
 	if (!OwningWeapon)
 	{
-		UE_LOG(LogTemp, Error, TEXT("InitializeAmmo: UTP_WeaponComponent's owner is not an AWeapon!"))
 		return;
 	}
 
@@ -64,18 +64,18 @@ void UTP_WeaponComponent::AttachWeaponToCharacter(ACPPStudyCharacter* TargetChar
 		return;
 	}
 
+	ensureMsgf(OwningWeapon, TEXT("AttachWeaponToCharacter: OwningWeapon is null. BeginPlay must be called first."));
 	if (!OwningWeapon)
 	{
-		UE_LOG(LogTemp, Error, TEXT("AttachWeaponToCharacter: AttachWeapon failed. OwningWeapon is null."));
 		return;
 	}
 
 	OwningCharacter = TargetCharacter;
 
 	USceneComponent* ParentMesh = OwningCharacter->GetMesh1P();
+	ensureMsgf(ParentMesh, TEXT("AttachWeaponToCharacter: Character mesh (GetMesh1P) is null. The character must have a valid first-person mesh."));
 	if (!ParentMesh)
 	{
-		UE_LOG(LogTemp, Error, TEXT("AttachWeaponToCharacter: Character mesh (GetMesh1P) is null."));
 		return;
 	}
 
@@ -113,9 +113,10 @@ void UTP_WeaponComponent::StopFire()
 
 void UTP_WeaponComponent::StartReload()
 {
+	ensureMsgf(OwningCharacter, TEXT("StartReload: OwningCharacter is null. AttachWeaponToCharacter must be called first."));
+	ensureMsgf(OwningWeapon, TEXT("StartReload: OwningWeapon is null. BeginPlay must be called first."));
 	if (!OwningCharacter || !OwningWeapon)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("StartReload: Missing OwningCharacter or OwningWeapon"));
 		return;
 	}
 
@@ -157,15 +158,22 @@ void UTP_WeaponComponent::StartReload()
 
 void UTP_WeaponComponent::Fire()
 {
-	if (!OwningCharacter || !OwningCharacter->GetController())
+	ensureMsgf(OwningCharacter, TEXT("Fire: OwningCharacter is null. AttachWeaponToCharacter must be called first."));
+  if (!OwningCharacter)
+  {
+    return;
+  }
+
+  APlayerController* PlayerController = Cast<APlayerController>(OwningCharacter->GetController());
+	ensureMsgf(PlayerController, TEXT("Fire: Character's Controller is not a PlayerController. This component is designed for player characters."));
+	if (!PlayerController)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Fire: no Character or Controller."));
 		return;
 	}
 
+	ensureMsgf(OwningWeapon, TEXT("Fire: OwningWeapon is null. BeginPlay must be called first."));
 	if (!OwningWeapon)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Fire: no OwningWeapon."));
 		return;
 	}
 
@@ -220,24 +228,10 @@ void UTP_WeaponComponent::Fire()
 
 	// Collision Query
 
-	APlayerController* PlayerController = Cast<APlayerController>(OwningCharacter->GetController());
-	if (!PlayerController)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Fire:: no PlayerController."));
-		return;
-	}
-
 	FVector CameraLocation;
 	FRotator CameraRotation;
-  if (PlayerController)
-  {
-	  PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
-  }
-  else
-  {
-    UE_LOG(LogTemp, Warning, TEXT("Fire: no PlayerController."));
-    OwningWeapon->GetActorEyesViewPoint(CameraLocation, CameraRotation);
-  }
+	
+	PlayerController->GetPlayerViewPoint(CameraLocation, CameraRotation);
 
 	const FVector TraceStart = CameraLocation;
 	const FVector ShotDirection = CameraRotation.Vector().GetSafeNormal();
@@ -292,6 +286,7 @@ void UTP_WeaponComponent::ConsumeAmmo()
 
 void UTP_WeaponComponent::FinishReload()
 {
+	ensureMsgf(OwningWeapon, TEXT("FinishReload: OwningWeapon is null. BeginPlay must be called first."));
 	if (!OwningWeapon) return;
 
 	const int32 AmmoToReload = FMath::Min(OwningWeapon->MagazineCapacity - CurrentAmmo, TotalAmmo);
@@ -306,8 +301,9 @@ void UTP_WeaponComponent::FinishReload()
 
 bool UTP_WeaponComponent::CanReload() const
 {
-  if (!OwningWeapon) return false;
-  return !bIsReloading && (CurrentAmmo < OwningWeapon->MagazineCapacity) && (TotalAmmo > 0);
+	ensureMsgf(OwningWeapon, TEXT("CanReload: OwningWeapon is null. BeginPlay must be called first."));
+	if (!OwningWeapon) return false;
+	return !bIsReloading && (CurrentAmmo < OwningWeapon->MagazineCapacity) && (TotalAmmo > 0);
 }
 
 void UTP_WeaponComponent::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
