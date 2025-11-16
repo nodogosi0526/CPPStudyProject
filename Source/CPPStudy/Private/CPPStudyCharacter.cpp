@@ -71,9 +71,20 @@ void ACPPStudyCharacter::BeginPlay()
 
 void ACPPStudyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {	
-	// Set up action bindings
+  // Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
+    ensureMsgf(JumpAction,     TEXT("SetupPlayerInputComponent: JumpAction is null. Set it in the Character Blueprint."));
+    ensureMsgf(MoveAction,     TEXT("SetupPlayerInputComponent: MoveAction is null. Set it in the Character Blueprint."));
+    ensureMsgf(LookAction,     TEXT("SetupPlayerInputComponent: LookAction is null. Set it in the Character Blueprint."));
+    ensureMsgf(ReloadAction,   TEXT("SetupPlayerInputComponent: ReloadAction is null. Set it in the Character Blueprint."));
+    ensureMsgf(ShootingAction, TEXT("SetupPlayerInputComponent: ShootingAction is null. Set it in the Character Blueprint."));
+
+    if (!JumpAction || !MoveAction || !LookAction || !ReloadAction || !ShootingAction)
+    {
+      return;
+    }
+
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
