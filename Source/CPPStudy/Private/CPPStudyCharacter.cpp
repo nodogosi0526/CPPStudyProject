@@ -120,26 +120,22 @@ void ACPPStudyCharacter::EquipWeapon(TSubclassOf<AWeapon> WeaponClass)
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	EquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass, GetActorLocation(), GetActorRotation(), SpawnParams);
+	ensureMsgf(EquippedWeapon, TEXT("EquipWeapon: Could not spawn weapon from class. Check WeaponClass is valid and World is available."));
+	if (!EquippedWeapon)
+	{
+		return;
+	}
+	EquippedWeaponComponent = EquippedWeapon->FindComponentByClass<UTP_WeaponComponent>();
 
-	if (EquippedWeapon)
+	ensureMsgf(EquippedWeaponComponent, TEXT("EquipWeapon: Spawned weapon does not have a UTP_WeaponComponent. The weapon class must include this component."));
+	if (!EquippedWeaponComponent)
 	{
-		EquippedWeaponComponent = EquippedWeapon->FindComponentByClass<UTP_WeaponComponent>();
-		if (EquippedWeaponComponent)
-		{
-			EquippedWeaponComponent->AttachWeaponToCharacter(this);
-			EquippedWeaponComponent->InitializeAmmo(EquippedWeapon->MagazineCapacity, EquippedWeapon->MaxTotalAmmo);
-			EquippedWeaponComponent->OnAmmoChanged.AddDynamic(this, &ACPPStudyCharacter::HandleWeaponAmmoChanged);
-			OnAmmoChanged.Broadcast(EquippedWeaponComponent->GetCurrentAmmo(), EquippedWeaponComponent->GetTotalAmmo());
-		}
-		else
-		{
-			UE_LOG(LogTemplateCharacter, Error, TEXT("EquipWeapon failed: Spawned weapon dose not have a UTP_WeaponComponent."));
-		}
+		return;
 	}
-	else
-	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("EquipWeapon failed: Could not spawn weapon from class."));
-	}
+	EquippedWeaponComponent->AttachWeaponToCharacter(this);
+	EquippedWeaponComponent->InitializeAmmo(EquippedWeapon->MagazineCapacity, EquippedWeapon->MaxTotalAmmo);
+	EquippedWeaponComponent->OnAmmoChanged.AddDynamic(this, &ACPPStudyCharacter::HandleWeaponAmmoChanged);
+	OnAmmoChanged.Broadcast(EquippedWeaponComponent->GetCurrentAmmo(), EquippedWeaponComponent->GetTotalAmmo());
 }
 
 float ACPPStudyCharacter::TakeDamage(float DamageAmount,
@@ -195,46 +191,54 @@ float ACPPStudyCharacter::TakeDamage(float DamageAmount,
 
 void ACPPStudyCharacter::StartFire()
 {
-	if (EquippedWeaponComponent)
+	ensureMsgf(EquippedWeaponComponent, TEXT("StartFire: EquippedWeaponComponent is null. EquipWeapon must be called first."));
+	if (!EquippedWeaponComponent)
 	{
-		EquippedWeaponComponent->StartFire();
+		return;
 	}
+	EquippedWeaponComponent->StartFire();
 }
 
 void ACPPStudyCharacter::StopFire()
 {
-	if (EquippedWeaponComponent)
+	ensureMsgf(EquippedWeaponComponent, TEXT("StopFire: EquippedWeaponComponent is null. EquipWeapon must be called first."));
+	if (!EquippedWeaponComponent)
 	{
-		EquippedWeaponComponent->StopFire();
+		return;
 	}
+	EquippedWeaponComponent->StopFire();
 }
 
 void ACPPStudyCharacter::StartReload()
 {
-	if (EquippedWeaponComponent)
+	ensureMsgf(EquippedWeaponComponent, TEXT("StartReload: EquippedWeaponComponent is null. EquipWeapon must be called first."));
+	if (!EquippedWeaponComponent)
 	{
-		EquippedWeaponComponent->StartReload();
+		return;
 	}
+	EquippedWeaponComponent->StartReload();
 }
 
 // Getter functions and event handlers
 
 int32 ACPPStudyCharacter::GetCurrentAmmo() const
 {
-	if (EquippedWeaponComponent)
+	ensureMsgf(EquippedWeaponComponent, TEXT("GetCurrentAmmo: EquippedWeaponComponent is null. EquipWeapon must be called first."));
+	if (!EquippedWeaponComponent)
 	{
-		EquippedWeaponComponent->GetCurrentAmmo();
+		return 0;
 	}
-	return 0;
+	return EquippedWeaponComponent->GetCurrentAmmo();
 }
 
 int32 ACPPStudyCharacter::GetTotalAmmo() const
 {
-	if (EquippedWeaponComponent)
+	ensureMsgf(EquippedWeaponComponent, TEXT("GetTotalAmmo: EquippedWeaponComponent is null. EquipWeapon must be called first."));
+	if (!EquippedWeaponComponent)
 	{
-		EquippedWeaponComponent->GetTotalAmmo();
+		return 0;
 	}
-	return 0;
+	return EquippedWeaponComponent->GetTotalAmmo();
 }
 
 void ACPPStudyCharacter::HandleWeaponAmmoChanged(int32 NewCurrentAmmo, int32 NewTotalAmmo)
@@ -252,12 +256,14 @@ void ACPPStudyCharacter::Move(const FInputActionValue& Value)
 	// input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
-	if (Controller != nullptr)
+	ensureMsgf(Controller, TEXT("Move: Controller is null. This should not happen during normal gameplay."));
+	if (!Controller)
 	{
-		// add movement 
-		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
-		AddMovementInput(GetActorRightVector(), MovementVector.X);
+		return;
 	}
+  // add movement 
+  AddMovementInput(GetActorForwardVector(), MovementVector.Y);
+  AddMovementInput(GetActorRightVector(), MovementVector.X);
 }
 
 void ACPPStudyCharacter::Look(const FInputActionValue& Value)
@@ -265,10 +271,12 @@ void ACPPStudyCharacter::Look(const FInputActionValue& Value)
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	if (Controller != nullptr)
+	ensureMsgf(Controller, TEXT("Look: Controller is null. This should not happen during normal gameplay."));
+	if (!Controller)
 	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		return;
 	}
+  // add yaw and pitch input to controller
+  AddControllerYawInput(LookAxisVector.X);
+  AddControllerPitchInput(LookAxisVector.Y);
 }

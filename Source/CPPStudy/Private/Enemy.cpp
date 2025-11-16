@@ -68,20 +68,30 @@ void AEnemy::Attack()
 
 	if (EnemyState == EEnemyState::EES_Dead || EnemyState ==  EEnemyState::EES_Pooled) return;
 
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance != nullptr)
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	ensureMsgf(MeshComp, TEXT("Attack: Character mesh is null. The enemy must have a valid skeletal mesh component."));
+	if (!MeshComp)
 	{
-		// Play attack montage
-		if (MeleeAttackMontage != nullptr)
+		return;
+	}
+
+	UAnimInstance* AnimInstance = MeshComp->GetAnimInstance();
+	ensureMsgf(AnimInstance, TEXT("Attack: AnimInstance is null. The mesh must have a valid animation instance."));
+	if (!AnimInstance)
+	{
+		return;
+	}
+
+	// Play attack montage
+	ensureMsgf(MeleeAttackMontage, TEXT("Attack: MeleeAttackMontage is not set. Please assign an attack montage in the Blueprint."));
+	if (MeleeAttackMontage != nullptr)
+	{
+		AnimInstance->Montage_Play(MeleeAttackMontage);
+
+		// Play attack sounds
+		if (MeleeAttackSounds.Num() > 0)
 		{
-			AnimInstance->Montage_Play(MeleeAttackMontage);
-
-			// Play attack sounds
-			if (MeleeAttackSounds.Num() > 0)
-			{
-				UGameplayStatics::PlaySoundAtLocation(GetWorld(), MeleeAttackSounds[FMath::RandRange(0, MeleeAttackSounds.Num() - 1)], GetActorLocation());
-			}
-
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), MeleeAttackSounds[FMath::RandRange(0, MeleeAttackSounds.Num() - 1)], GetActorLocation());
 		}
 	}
 }
@@ -166,12 +176,19 @@ void AEnemy::Die()
 	}
 
 	// Play death montage
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance != nullptr)
+	USkeletalMeshComponent* MeshComp = GetMesh();
+	ensureMsgf(MeshComp, TEXT("Die: Character mesh is null. The enemy must have a valid skeletal mesh component."));
+	if (MeshComp)
 	{
-		if (DeathMontage != nullptr)
+		UAnimInstance* AnimInstance = MeshComp->GetAnimInstance();
+		ensureMsgf(AnimInstance, TEXT("Die: AnimInstance is null. The mesh must have a valid animation instance."));
+		if (AnimInstance)
 		{
-			AnimInstance->Montage_Play(DeathMontage);
+			ensureMsgf(DeathMontage, TEXT("Die: DeathMontage is not set. Please assign a death montage in the Blueprint."));
+			if (DeathMontage != nullptr)
+			{
+				AnimInstance->Montage_Play(DeathMontage);
+			}
 		}
 	}
 
@@ -273,6 +290,12 @@ void AEnemy::OnRightHandOverlap(UPrimitiveComponent* OverlappedComponent,
                                 bool bFromSweep,
                                 const FHitResult& SweepResult)
 {
+	ensureMsgf(RightHandCollision, TEXT("OnRightHandOverlap: RightHandCollision is null. This component must be initialized in the constructor."));
+	if (!RightHandCollision)
+	{
+		return;
+	}
+
   // Validate target
 	ACPPStudyCharacter* Player = Cast<ACPPStudyCharacter>(OtherActor);
   if (!Player || Cast<AActor>(Player) == this) return;
@@ -286,6 +309,7 @@ void AEnemy::OnRightHandOverlap(UPrimitiveComponent* OverlappedComponent,
   TSubclassOf<UDamageType> DamageType = MeleeDamageType ? MeleeDamageType : TSubclassOf<UDamageType>(UDamageType::StaticClass());
   // InstigatorController
   AController* InstigatorController = (GetController() ? GetController() : GetInstigatorController());
+	ensureMsgf(InstigatorController, TEXT("OnRightHandOverlap: InstigatorController is null. The enemy should have a controller for damage application."));
 
   // Determine hit location and direction
   // Overlap events are not always from Sweep, so provide fallback values
