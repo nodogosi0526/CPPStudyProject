@@ -238,14 +238,15 @@ void UTP_WeaponComponent::Fire()
 	const FVector TraceEnd = TraceStart + ShotDirection * OwningWeapon->MaxRange;
 
 	FHitResult HitResult;
-	//Collision Query Parameters
+	static constexpr ECollisionChannel WeaponTrace = ECC_GameTraceChannel;
+
+  //Collision Query Parameters
 	FCollisionQueryParams CollisionParams(SCENE_QUERY_STAT(WeaponTrace), true);
 	CollisionParams.AddIgnoredActor(OwningCharacter);
 	CollisionParams.AddIgnoredActor(OwningWeapon);
 	CollisionParams.bReturnPhysicalMaterial = true;
 
-	const ECollisionChannel TraceChannel = ECC_Visibility;
-	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, TraceChannel, CollisionParams);
+	bool bHit = GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, WeaponTrace, CollisionParams);
 
 	// (Debug) Line Trace
 #if WITH_EDITOR
