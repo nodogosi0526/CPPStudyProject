@@ -144,7 +144,7 @@ void ACPPStudyCharacter::EquipWeapon(TSubclassOf<AWeapon> WeaponClass)
 		return;
 	}
 	EquippedWeaponComponent->AttachWeaponToCharacter(this);
-	EquippedWeaponComponent->InitializeAmmo(EquippedWeapon->MagazineCapacity, EquippedWeapon->MaxTotalAmmo);
+	EquippedWeaponComponent->InitializeAmmo();
 	EquippedWeaponComponent->OnAmmoChanged.AddDynamic(this, &ACPPStudyCharacter::HandleWeaponAmmoChanged);
 	OnAmmoChanged.Broadcast(EquippedWeaponComponent->GetCurrentAmmo(), EquippedWeaponComponent->GetTotalAmmo());
 }

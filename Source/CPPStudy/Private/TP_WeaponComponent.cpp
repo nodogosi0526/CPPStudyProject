@@ -6,6 +6,7 @@
 #include "CPPStudyProjectile.h"
 #include "Enemy.h"
 #include "Weapon.h"
+#include "WeaponData.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/AudioComponent.h"
@@ -28,11 +29,18 @@ void UTP_WeaponComponent::BeginPlay()
 	Super::BeginPlay();
 
 	OwningWeapon = Cast<AWeapon>(GetOwner());
-  ensureMsgf(OwningWeapon, TEXT("BeginPlay: OwningWeapon is not!."));
+  ensureMsgf(OwningWeapon, TEXT("BeginPlay: OwningWeapon is not an AWeapon!."));
 	if (!OwningWeapon)
 	{
 		return;
 	}
+
+  WeaponData = OwningWeapon->GetWeaponData();
+  ensureMsgf(WeaponData, TEXT("BeginPlay: WeaponData is null. Make sure the Weapon has a valid UWeaponData assigned."));
+  if (!WeaponData)
+  {
+      return;
+  }
 }
 
 void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -42,18 +50,18 @@ void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 }
 
-void UTP_WeaponComponent::InitializeAmmo(int32 InitialClipAmmo, int32 InitialTotalAmmo)
+void UTP_WeaponComponent::InitializeAmmo()
 {
-	ensureMsgf(OwningWeapon, TEXT("InitializeAmmo: UTP_WeaponComponent's owner is not an AWeapon! BeginPlay must be called first."));
-	if (!OwningWeapon)
-	{
-		return;
-	}
+  ensureMsgf(WeaponData, TEXT("InitializeAmmo: WeaponData is null. BeginPlay must be called first."));
+  if (!WeaponData)
+  {
+    return;
+  }
 
-	CurrentAmmo = FMath::Clamp(InitialClipAmmo, 0, OwningWeapon->MagazineCapacity);
-	TotalAmmo = FMath::Clamp(InitialTotalAmmo, 0, OwningWeapon->MaxTotalAmmo);
+  CurrentAmmo = WeaponData->MagazineCapacity;
+  TotalAmmo   = WeaponData->MaxTotalAmmo;
 
-	UE_LOG(LogTemp, Log, TEXT("Ammo Initialized. Current: %d, Total: %d"), CurrentAmmo, TotalAmmo);
+  UE_LOG(LogTemp, Log, TEXT("Ammo Initialized from WeaponData. Current: %d, Total: %d"), CurrentAmmo, TotalAmmo);
 }
 
 void UTP_WeaponComponent::AttachWeaponToCharacter(ACPPStudyCharacter* TargetCharacter)
@@ -99,9 +107,9 @@ void UTP_WeaponComponent::StartFire()
 
 	Fire();
 
-	if (OwningWeapon && OwningWeapon->FireRate > 0)
+	if (OwningWeapon && WeaponData->FireRate > 0)
 	{
-		const float FireInterval = 1.0f / OwningWeapon->FireRate;
+		const float FireInterval = 1.0f / WeaponData->FireRate;
 		GetWorld()->GetTimerManager().SetTimer(FireRateTimerHandle, this, &UTP_WeaponComponent::Fire, FireInterval, true);
 	}
 }
@@ -130,19 +138,19 @@ void UTP_WeaponComponent::StartReload()
 
 	StopFire();
 
-	if (OwningWeapon->ReloadMontage)
+	if (WeaponData && WeaponData->ReloadMontage)
 	{
 		UAnimInstance* AnimInstance = OwningCharacter->GetMesh1P()->GetAnimInstance();
 
 		if (AnimInstance)
 		{
-			const float MontagePlayRate = AnimInstance->Montage_Play(OwningWeapon->ReloadMontage);
+			const float MontagePlayRate = AnimInstance->Montage_Play(WeaponData->ReloadMontage);
 
 			if (MontagePlayRate > 0.f)
 			{
 				FOnMontageEnded BlendOutDelegate;
 				BlendOutDelegate.BindUObject(this, &UTP_WeaponComponent::OnReloadMontageEnded);
-				AnimInstance->Montage_SetEndDelegate(BlendOutDelegate, OwningWeapon->ReloadMontage);
+				AnimInstance->Montage_SetEndDelegate(BlendOutDelegate, WeaponData->ReloadMontage);
 			}
 			else
 			{
@@ -191,9 +199,9 @@ void UTP_WeaponComponent::Fire()
 
 	// Fire Montage
 
-	if (AnimInstance && OwningWeapon->FireMontage)
+	if (AnimInstance && WeaponData->FireMontage)
 	{
-		const float PlayRate = AnimInstance->Montage_Play(OwningWeapon->FireMontage);
+		const float PlayRate = AnimInstance->Montage_Play(WeaponData->FireMontage);
 		UE_LOG(LogTemp, Verbose, TEXT("Fire: Montage_Play returned %f"), PlayRate);
 	}
 	else
@@ -206,19 +214,19 @@ void UTP_WeaponComponent::Fire()
 
 	// Fire Sound
 
-	if (OwningWeapon->FireSound)
+	if (WeaponData->FireSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, OwningWeapon->FireSound, OwningCharacter->GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(this, WeaponData->FireSound, OwningCharacter->GetActorLocation());
 	}
 
 	// Muzzle Effect (Niagara System)
 
-	if (OwningWeapon->MuzzleFlash && Mesh)
+	if (WeaponData->MuzzleFlash && Mesh)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAttached(
-			OwningWeapon->MuzzleFlash,
+			WeaponData->MuzzleFlash,
 			Mesh,
-			OwningWeapon->MuzzleSocketName,
+      WeaponData->MuzzleSocketName,
 			FVector::ZeroVector,
 			FRotator::ZeroRotator,
 			EAttachLocation::SnapToTarget,
@@ -235,7 +243,8 @@ void UTP_WeaponComponent::Fire()
 
 	const FVector TraceStart = CameraLocation;
 	const FVector ShotDirection = CameraRotation.Vector().GetSafeNormal();
-	const FVector TraceEnd = TraceStart + ShotDirection * OwningWeapon->MaxRange;
+	const float MaxRange = WeaponData ? WeaponData->MaxRange : 1000.f;
+  const FVector TraceEnd = TraceStart + ShotDirection * MaxRange;
 
 	FHitResult HitResult;
 	static constexpr ECollisionChannel WeaponTrace = ECC_GameTraceChannel;
@@ -263,15 +272,16 @@ void UTP_WeaponComponent::Fire()
     AActor* HitActor = HitResult.GetActor();
     if (HitActor)
     {
-      UGameplayStatics::ApplyPointDamage(HitActor, OwningWeapon->Damage, ShotDirection, HitResult, PlayerController, OwningWeapon, UDamageType::StaticClass());
+      const float Damage = WeaponData ? WeaponData->Damage : 0.f;
+      UGameplayStatics::ApplyPointDamage(HitActor, Damage, ShotDirection, HitResult, PlayerController, OwningWeapon, UDamageType::StaticClass());
     }
 
     // Impact Effect
-		if (OwningWeapon->ImpactEffect)
+		if (WeaponData->ImpactEffect)
 		{
 			UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 				GetWorld(),
-				OwningWeapon->ImpactEffect,
+				WeaponData->ImpactEffect,
 				HitResult.ImpactPoint,
 				HitResult.ImpactNormal.Rotation()
 			);
@@ -287,10 +297,10 @@ void UTP_WeaponComponent::ConsumeAmmo()
 
 void UTP_WeaponComponent::FinishReload()
 {
-	ensureMsgf(OwningWeapon, TEXT("FinishReload: OwningWeapon is null. BeginPlay must be called first."));
-	if (!OwningWeapon) return;
+	ensureMsgf(WeaponData, TEXT("FinishReload: WeaponData is null. BeginPlay must be called first."));
+	if (!WeaponData) return;
 
-	const int32 AmmoToReload = FMath::Min(OwningWeapon->MagazineCapacity - CurrentAmmo, TotalAmmo);
+	const int32 AmmoToReload = FMath::Min(WeaponData->MagazineCapacity - CurrentAmmo, TotalAmmo);
 	CurrentAmmo += AmmoToReload;
 	TotalAmmo -= AmmoToReload;
 
@@ -302,9 +312,9 @@ void UTP_WeaponComponent::FinishReload()
 
 bool UTP_WeaponComponent::CanReload() const
 {
-	ensureMsgf(OwningWeapon, TEXT("CanReload: OwningWeapon is null. BeginPlay must be called first."));
-	if (!OwningWeapon) return false;
-	return !bIsReloading && (CurrentAmmo < OwningWeapon->MagazineCapacity) && (TotalAmmo > 0);
+	ensureMsgf(WeaponData, TEXT("CanReload: WeaponData is null. BeginPlay must be called first."));
+	if (!WeaponData) return false;
+	return !bIsReloading && (CurrentAmmo < WeaponData->MagazineCapacity) && (TotalAmmo > 0);
 }
 
 void UTP_WeaponComponent::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted)

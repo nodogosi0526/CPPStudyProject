@@ -23,7 +23,7 @@ public:
 
 	// Function called from outside  
 
-	void InitializeAmmo(int32 InitialClipAmmo, int32 InitialTotalAmmo);
+	void InitializeAmmo();
 
 	void AttachWeaponToCharacter(ACPPStudyCharacter* TargetCharacter);
 

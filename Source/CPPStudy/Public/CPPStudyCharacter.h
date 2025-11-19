@@ -12,10 +12,11 @@ class USkeletalMeshComponent;
 class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
-struct FInputActionValue;
 class AWeapon;
+class UWeaponData;
 class UTP_WeaponComponent;
 class UAnimMontage;
+struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 // Delegate used to notify HP changes (float: Current HP, float: Max HP)
@@ -72,6 +73,10 @@ public:
 	/* Pointer to the weapon component of the equipped weapon */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "AAA | Weapon")
 	TObjectPtr<UTP_WeaponComponent> EquippedWeaponComponent;
+
+  // Weapon configuration (damage, ammo, montages, etc.)
+  UPROPERTY()
+  UWeaponData* WeaponData;
 
 	// --- Health ---
 
