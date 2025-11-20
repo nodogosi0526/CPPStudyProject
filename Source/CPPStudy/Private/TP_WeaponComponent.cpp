@@ -213,10 +213,10 @@ void UTP_WeaponComponent::Fire()
 	}
 
 	// Fire Sound
-
-	if (WeaponData->FireSound)
+  
+	if (OwningWeapon)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, WeaponData->FireSound, OwningCharacter->GetActorLocation());
+		OwningWeapon->PlayFireSound();
 	}
 
 	// Muzzle Effect (Niagara System)

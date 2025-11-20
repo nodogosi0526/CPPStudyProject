@@ -5,6 +5,7 @@
 #include "Weapon.generated.h"
 
 class UStaticMeshComponent;
+class UAudioComponent;
 class UTP_WeaponComponent;
 class UWeaponData;
 
@@ -22,10 +23,17 @@ public:
 	UFUNCTION(BlueprintPure, Category = "AAA | Weapon")
 	UWeaponData* GetWeaponData() const { return WeaponData; }
 
+  // --- AUDIO ---
+  
+	void PlayFireSound();
+
 protected:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AAA | Components")
 	TObjectPtr<UStaticMeshComponent> MeshComponent;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AAA | Components")
+	TObjectPtr<UAudioComponent> FireAudioComponent;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "AAA | Components")
 	TObjectPtr<UTP_WeaponComponent> WeaponComponent;
