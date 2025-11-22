@@ -16,7 +16,7 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
-#include "NiagaraFunctionLibrary.h"
+
 
 // Sets default values for this component's properties
 UTP_WeaponComponent::UTP_WeaponComponent()
@@ -48,6 +48,17 @@ void UTP_WeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
+
+	if (OwningCharacter)
+	{
+		if (USkeletalMeshComponent* Mesh = OwningCharacter->GetMesh1P())
+		{
+			if (UAnimInstance* AnimInstance = Mesh->GetAnimInstance())
+			{
+				AnimInstance->OnPlayMontageNotifyBegin.RemoveDynamic(this, &UTP_WeaponComponent::OnNotifyBegin);
+			}
+		}
+	}
 }
 
 void UTP_WeaponComponent::InitializeAmmo()
@@ -91,6 +102,11 @@ void UTP_WeaponComponent::AttachWeaponToCharacter(ACPPStudyCharacter* TargetChar
 	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
 	OwningWeapon->AttachToComponent(ParentMesh, AttachmentRules, SocketName);
 	OwningWeapon->SetOwner(OwningCharacter);
+
+	if (UAnimInstance* AnimInstance = ParentMesh->GetAnimInstance())
+	{
+		AnimInstance->OnPlayMontageNotifyBegin.AddDynamic(this, &UTP_WeaponComponent::OnNotifyBegin);
+	}
 }
 
 void UTP_WeaponComponent::StartFire()
@@ -102,21 +118,44 @@ void UTP_WeaponComponent::StartFire()
 
 	if (CurrentAmmo <= 0)
 	{
+		StartReload();
 		return;
 	}
 
-	Fire();
+  USkeletalMeshComponent* Mesh = OwningCharacter->GetMesh1P();
+	UAnimInstance* AnimInstance = Mesh ? Mesh->GetAnimInstance() : nullptr;
 
-	if (OwningWeapon && WeaponData->FireRate > 0)
+	// Fire Montage
+
+	if (AnimInstance && WeaponData->FireMontage)
 	{
-		const float FireInterval = 1.0f / WeaponData->FireRate;
-		GetWorld()->GetTimerManager().SetTimer(FireRateTimerHandle, this, &UTP_WeaponComponent::Fire, FireInterval, true);
+		const float PlayRate = AnimInstance->Montage_Play(WeaponData->FireMontage);
+		UE_LOG(LogTemp, Verbose, TEXT("Fire: Montage_Play returned %f"), PlayRate);
+	}
+	else
+	{
+		if (!AnimInstance)
+		{
+			UE_LOG(LogTemp, Verbose, TEXT("Fire: no AnimInstance (skip montage)"));
+		}
 	}
 }
 
 void UTP_WeaponComponent::StopFire()
 {
-	GetWorld()->GetTimerManager().ClearTimer(FireRateTimerHandle);
+	if (OwningCharacter)
+	{
+		if (USkeletalMeshComponent* Mesh = OwningCharacter->GetMesh1P())
+		{
+			if (UAnimInstance* AnimInstance = Mesh->GetAnimInstance())
+			{
+				if (WeaponData && WeaponData->FireMontage)
+				{
+					AnimInstance->Montage_Stop(0.2f, WeaponData->FireMontage);
+				}
+			}
+		}
+	}
 }
 
 void UTP_WeaponComponent::StartReload()
@@ -134,32 +173,34 @@ void UTP_WeaponComponent::StartReload()
 	}
 
 	bIsReloading = true;
-	UE_LOG(LogTemp, Log, TEXT("Reloading..."));
-
 	StopFire();
+
+	bool bPlayedMontage = false;
 
 	if (WeaponData && WeaponData->ReloadMontage)
 	{
-		UAnimInstance* AnimInstance = OwningCharacter->GetMesh1P()->GetAnimInstance();
-
-		if (AnimInstance)
+		if (UAnimInstance* AnimInstance = OwningCharacter->GetMesh1P()->GetAnimInstance())
 		{
 			const float MontagePlayRate = AnimInstance->Montage_Play(WeaponData->ReloadMontage);
-
 			if (MontagePlayRate > 0.f)
 			{
+				bPlayedMontage = true;
+				if (OwningWeapon)
+				{
+					OwningWeapon->PlayReloadStartSound();
+				}
+        
 				FOnMontageEnded BlendOutDelegate;
 				BlendOutDelegate.BindUObject(this, &UTP_WeaponComponent::OnReloadMontageEnded);
 				AnimInstance->Montage_SetEndDelegate(BlendOutDelegate, WeaponData->ReloadMontage);
 			}
-			else
-			{
-				FinishReload();
-			}
 		}
 	}
-	else
+
+	if (!bPlayedMontage)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("StartReload: No Reload Montage or failed to play. Executing instant reload."));
+		RefillAmmo();
 		FinishReload();
 	}
 }
@@ -194,24 +235,6 @@ void UTP_WeaponComponent::Fire()
 
 	ConsumeAmmo();
 
-	USkeletalMeshComponent* Mesh = OwningCharacter->GetMesh1P();
-	UAnimInstance* AnimInstance = Mesh ? Mesh->GetAnimInstance() : nullptr;
-
-	// Fire Montage
-
-	if (AnimInstance && WeaponData->FireMontage)
-	{
-		const float PlayRate = AnimInstance->Montage_Play(WeaponData->FireMontage);
-		UE_LOG(LogTemp, Verbose, TEXT("Fire: Montage_Play returned %f"), PlayRate);
-	}
-	else
-	{
-		if (!AnimInstance)
-		{
-			UE_LOG(LogTemp, Verbose, TEXT("Fire: no AnimInstance (skip montage)"));
-		}
-	}
-
 	// Fire Sound
   
 	if (OwningWeapon)
@@ -221,17 +244,9 @@ void UTP_WeaponComponent::Fire()
 
 	// Muzzle Effect (Niagara System)
 
-	if (WeaponData->MuzzleFlash && Mesh)
+	if (OwningWeapon)
 	{
-		UNiagaraFunctionLibrary::SpawnSystemAttached(
-			WeaponData->MuzzleFlash,
-			Mesh,
-      WeaponData->MuzzleSocketName,
-			FVector::ZeroVector,
-			FRotator::ZeroRotator,
-			EAttachLocation::SnapToTarget,
-			true
-		);
+		OwningWeapon->PlayMuzzleFX();
 	}
 
 	// Collision Query
@@ -277,14 +292,9 @@ void UTP_WeaponComponent::Fire()
     }
 
     // Impact Effect
-		if (WeaponData->ImpactEffect)
+		if (OwningWeapon)
 		{
-			UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-				GetWorld(),
-				WeaponData->ImpactEffect,
-				HitResult.ImpactPoint,
-				HitResult.ImpactNormal.Rotation()
-			);
+			OwningWeapon->PlayImpactFX(HitResult);
 		}
 	}
 }
@@ -297,17 +307,38 @@ void UTP_WeaponComponent::ConsumeAmmo()
 
 void UTP_WeaponComponent::FinishReload()
 {
-	ensureMsgf(WeaponData, TEXT("FinishReload: WeaponData is null. BeginPlay must be called first."));
+	bIsReloading = false;
+}
+
+void UTP_WeaponComponent::OnNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointNotifyPayload)
+{
+	if (NotifyName == FName(TEXT("Fire")))
+	{
+		Fire();
+	}
+	else if (NotifyName == FName(TEXT("Reload")))
+	{
+		RefillAmmo();
+	}
+}
+
+void UTP_WeaponComponent::RefillAmmo()
+{
+	ensureMsgf(WeaponData, TEXT("RefillAmmo: WeaponData is null. BeginPlay must be called first."));
 	if (!WeaponData) return;
 
 	const int32 AmmoToReload = FMath::Min(WeaponData->MagazineCapacity - CurrentAmmo, TotalAmmo);
 	CurrentAmmo += AmmoToReload;
 	TotalAmmo -= AmmoToReload;
 
-	bIsReloading = false;
-
 	OnAmmoChanged.Broadcast(CurrentAmmo, TotalAmmo);
-	UE_LOG(LogTemp, Log, TEXT("FinishReload: CurrentAmmo: %d. TotalAmmo: %d."), CurrentAmmo, TotalAmmo);
+
+	if (OwningWeapon)
+	{
+		OwningWeapon->PlayReloadEndSound();
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("RefillAmmo: CurrentAmmo: %d. TotalAmmo: %d."), CurrentAmmo, TotalAmmo);
 }
 
 bool UTP_WeaponComponent::CanReload() const
@@ -319,13 +350,9 @@ bool UTP_WeaponComponent::CanReload() const
 
 void UTP_WeaponComponent::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-  if (!bInterrupted)
-  {
-    FinishReload();
-  }
-  else
-  {
-    bIsReloading = false;
-    UE_LOG(LogTemp, Warning, TEXT("OnReloadMontageEnded: Reload montage interrupted."));
-  }
+	if (bInterrupted)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("OnReloadMontageEnded: Reload montage interrupted."));
+	}
+	FinishReload();
 }

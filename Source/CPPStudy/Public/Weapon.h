@@ -26,6 +26,13 @@ public:
   // --- AUDIO ---
   
 	void PlayFireSound();
+	void PlayReloadStartSound();
+	void PlayReloadEndSound();
+
+	// --- VFX ---
+
+	void PlayMuzzleFX();
+	void PlayImpactFX(const FHitResult& HitResult);
 
 protected:
 

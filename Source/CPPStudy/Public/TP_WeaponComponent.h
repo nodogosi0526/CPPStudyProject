@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Animation/AnimNotifies/AnimNotify.h"
 #include "TP_WeaponComponent.generated.h"
 
 class ACPPStudyCharacter;
@@ -88,7 +89,9 @@ private:
 	UPROPERTY(VisibleInstanceOnly, Category = "AAA | Weapon State")
 	bool bIsReloading = false;
 
-	// Fire interval timer
+	UFUNCTION()
+	void OnNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointNotifyPayload);
 
-	FTimerHandle FireRateTimerHandle;;
+public:
+	void RefillAmmo();
 };

@@ -11,7 +11,7 @@
 
 # 各グループに // --- Animation --- のようにセクションコメントを入れること
 - 例：
-    // --- Ammo -------------------------------------------------------------
+    // --- Ammo ---
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Ammo", meta = (ClampMin = "0"))
 	int32 MagazineCapacity = 30;
@@ -19,7 +19,7 @@
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Ammo", meta = (ClampMin = "0"))
 	int32 MaxTotalAmmo = 120;
 
-	// --- Muzzle Offset ----------------------------------------------------
+	  // --- Muzzle Offset ---
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Combat")
 	FVector MuzzleOffset = FVector(100.f, 0.f, 10.f);
