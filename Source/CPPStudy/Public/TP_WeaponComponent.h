@@ -10,6 +10,7 @@
 class ACPPStudyCharacter;
 class AWeapon;
 class UAnimMontage;
+class UWeaponData;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnWeaponAmmoChangedSignature, int32, CurrentAmmo, int32, TotalAmmo);
 
@@ -88,6 +89,9 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, Category = "AAA | Weapon State")
 	bool bIsReloading = false;
+
+	UPROPERTY(Transient)
+	UWeaponData* WeaponData;
 
 	UFUNCTION()
 	void OnNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointNotifyPayload);

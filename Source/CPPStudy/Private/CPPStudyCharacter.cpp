@@ -22,8 +22,8 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 ACPPStudyCharacter::ACPPStudyCharacter()
     :JumpAction(nullptr)
-	,LookAction(nullptr)
 	,MoveAction(nullptr)
+    ,LookAction(nullptr)
 	,ReloadAction(nullptr)
 	,ShootingAction(nullptr)
 {

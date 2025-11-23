@@ -2,6 +2,7 @@
 
 
 #include "TP_WeaponComponent.h"
+#include "CPPStudy.h"
 #include "CPPStudyCharacter.h"
 #include "CPPStudyProjectile.h"
 #include "Enemy.h"
@@ -91,7 +92,7 @@ void UTP_WeaponComponent::AttachWeaponToCharacter(ACPPStudyCharacter* TargetChar
 
 	OwningCharacter = TargetCharacter;
 
-	USceneComponent* ParentMesh = OwningCharacter->GetMesh1P();
+	USkeletalMeshComponent* ParentMesh = OwningCharacter->GetMesh1P();
 	ensureMsgf(ParentMesh, TEXT("AttachWeaponToCharacter: Character mesh (GetMesh1P) is null. The character must have a valid first-person mesh."));
 	if (!ParentMesh)
 	{
@@ -122,7 +123,7 @@ void UTP_WeaponComponent::StartFire()
 		return;
 	}
 
-  USkeletalMeshComponent* Mesh = OwningCharacter->GetMesh1P();
+    USkeletalMeshComponent* Mesh = OwningCharacter->GetMesh1P();
 	UAnimInstance* AnimInstance = Mesh ? Mesh->GetAnimInstance() : nullptr;
 
 	// Fire Montage
@@ -262,7 +263,7 @@ void UTP_WeaponComponent::Fire()
   const FVector TraceEnd = TraceStart + ShotDirection * MaxRange;
 
 	FHitResult HitResult;
-	static constexpr ECollisionChannel WeaponTrace = ECC_GameTraceChannel;
+	static constexpr ECollisionChannel WeaponTrace = ECC_GameTraceChannel1;
 
   //Collision Query Parameters
 	FCollisionQueryParams CollisionParams(SCENE_QUERY_STAT(WeaponTrace), true);
