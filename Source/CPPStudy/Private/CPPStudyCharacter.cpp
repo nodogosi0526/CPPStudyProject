@@ -202,6 +202,8 @@ float ACPPStudyCharacter::TakeDamage(float DamageAmount,
 
 void ACPPStudyCharacter::StartFire()
 {
+	UE_LOG(LogTemplateCharacter, Log, TEXT("StartFire called in Character"));
+
 	ensureMsgf(EquippedWeaponComponent, TEXT("StartFire: EquippedWeaponComponent is null. EquipWeapon must be called first."));
 	if (!EquippedWeaponComponent)
 	{
@@ -222,6 +224,8 @@ void ACPPStudyCharacter::StopFire()
 
 void ACPPStudyCharacter::StartReload()
 {
+	UE_LOG(LogTemplateCharacter, Log, TEXT("StartReload called in Character"));
+
 	ensureMsgf(EquippedWeaponComponent, TEXT("StartReload: EquippedWeaponComponent is null. EquipWeapon must be called first."));
 	if (!EquippedWeaponComponent)
 	{

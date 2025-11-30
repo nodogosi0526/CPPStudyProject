@@ -112,13 +112,17 @@ void UTP_WeaponComponent::AttachWeaponToCharacter(ACPPStudyCharacter* TargetChar
 
 void UTP_WeaponComponent::StartFire()
 {
+	UE_LOG(LogTemp, Log, TEXT("TP_WeaponComponent::StartFire called"));
+
 	if (bIsReloading)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("StartFire: Blocked because bIsReloading is true"));
 		return;
 	}
 
 	if (CurrentAmmo <= 0)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("StartFire: Out of ammo, triggering reload"));
 		StartReload();
 		return;
 	}
@@ -128,16 +132,28 @@ void UTP_WeaponComponent::StartFire()
 
 	// Fire Montage
 
-	if (AnimInstance && WeaponData->FireMontage)
+	if (AnimInstance && WeaponData && WeaponData->FireMontage)
 	{
 		const float PlayRate = AnimInstance->Montage_Play(WeaponData->FireMontage);
-		UE_LOG(LogTemp, Verbose, TEXT("Fire: Montage_Play returned %f"), PlayRate);
+		UE_LOG(LogTemp, Warning, TEXT("Fire: Montage_Play returned %f"), PlayRate);
+		if (PlayRate <= 0.f)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Fire: Montage_Play failed. Check AnimBP 'DefaultSlot' or Skeleton compatibility."));
+		}
 	}
 	else
 	{
 		if (!AnimInstance)
 		{
-			UE_LOG(LogTemp, Verbose, TEXT("Fire: no AnimInstance (skip montage)"));
+			UE_LOG(LogTemp, Warning, TEXT("Fire: no AnimInstance (skip montage)"));
+		}
+		if (!WeaponData)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Fire: WeaponData is null"));
+		}
+		else if (!WeaponData->FireMontage)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Fire: FireMontage is null in WeaponData"));
 		}
 	}
 }
@@ -161,6 +177,8 @@ void UTP_WeaponComponent::StopFire()
 
 void UTP_WeaponComponent::StartReload()
 {
+	UE_LOG(LogTemp, Log, TEXT("TP_WeaponComponent::StartReload called"));
+
 	ensureMsgf(OwningCharacter, TEXT("StartReload: OwningCharacter is null. AttachWeaponToCharacter must be called first."));
 	ensureMsgf(OwningWeapon, TEXT("StartReload: OwningWeapon is null. BeginPlay must be called first."));
 	if (!OwningCharacter || !OwningWeapon)
@@ -170,6 +188,7 @@ void UTP_WeaponComponent::StartReload()
 
 	if (!CanReload())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("StartReload: CanReload returned false (Reloading: %d, Ammo: %d/%d)"), bIsReloading, CurrentAmmo, WeaponData->MagazineCapacity);
 		return;
 	}
 
@@ -313,6 +332,8 @@ void UTP_WeaponComponent::FinishReload()
 
 void UTP_WeaponComponent::OnNotifyBegin(FName NotifyName, const FBranchingPointNotifyPayload& BranchingPointNotifyPayload)
 {
+	UE_LOG(LogTemp, Warning, TEXT("TP_WeaponComponent::OnNotifyBegin called with NotifyName: %s"), *NotifyName.ToString());
+
 	if (NotifyName == FName(TEXT("Fire")))
 	{
 		Fire();
