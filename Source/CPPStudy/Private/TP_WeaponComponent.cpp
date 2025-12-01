@@ -127,7 +127,7 @@ void UTP_WeaponComponent::StartFire()
 		return;
 	}
 
-    USkeletalMeshComponent* Mesh = OwningCharacter->GetMesh1P();
+  USkeletalMeshComponent* Mesh = OwningCharacter->GetMesh1P();
 	UAnimInstance* AnimInstance = Mesh ? Mesh->GetAnimInstance() : nullptr;
 
 	// Fire Montage
@@ -227,9 +227,12 @@ void UTP_WeaponComponent::StartReload()
 
 void UTP_WeaponComponent::Fire()
 {
+	UE_LOG(LogTemp, Warning, TEXT("TP_WeaponComponent::Fire called"));
+
 	ensureMsgf(OwningCharacter, TEXT("Fire: OwningCharacter is null. AttachWeaponToCharacter must be called first."));
   if (!OwningCharacter)
   {
+	UE_LOG(LogTemp, Error, TEXT("Fire: OwningCharacter is null"));
     return;
   }
 
@@ -237,23 +240,27 @@ void UTP_WeaponComponent::Fire()
 	ensureMsgf(PlayerController, TEXT("Fire: Character's Controller is not a PlayerController. This component is designed for player characters."));
 	if (!PlayerController)
 	{
+		UE_LOG(LogTemp, Error, TEXT("Fire: PlayerController is null or not a PlayerController"));
 		return;
 	}
 
 	ensureMsgf(OwningWeapon, TEXT("Fire: OwningWeapon is null. BeginPlay must be called first."));
 	if (!OwningWeapon)
 	{
+		UE_LOG(LogTemp, Error, TEXT("Fire: OwningWeapon is null"));
 		return;
 	}
 
 	if (CurrentAmmo <= 0)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Fire: Out of ammo (Current: %d), stopping fire and reloading"), CurrentAmmo);
 		StopFire();
 		StartReload();
 		return;
 	}
 
 	ConsumeAmmo();
+	UE_LOG(LogTemp, Log, TEXT("Fire: Ammo consumed. New Current: %d"), CurrentAmmo);
 
 	// Fire Sound
   
