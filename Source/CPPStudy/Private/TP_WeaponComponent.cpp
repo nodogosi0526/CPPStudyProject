@@ -134,6 +134,13 @@ void UTP_WeaponComponent::StartFire()
 
 	if (AnimInstance && WeaponData && WeaponData->FireMontage)
 	{
+		// Prevent resetting the montage if it's already playing (Fire Rate Limit by Animation)
+		if (AnimInstance->Montage_IsPlaying(WeaponData->FireMontage))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Fire: Montage is already playing, ignoring input"));
+			return;
+		}
+
 		const float PlayRate = AnimInstance->Montage_Play(WeaponData->FireMontage);
 		UE_LOG(LogTemp, Warning, TEXT("Fire: Montage_Play returned %f"), PlayRate);
 		if (PlayRate <= 0.f)
@@ -168,7 +175,9 @@ void UTP_WeaponComponent::StopFire()
 			{
 				if (WeaponData && WeaponData->FireMontage)
 				{
-					AnimInstance->Montage_Stop(0.2f, WeaponData->FireMontage);
+					// Do NOT stop the montage on release, otherwise the AnimNotify might not fire!
+					// AnimInstance->Montage_Stop(0.2f, WeaponData->FireMontage);
+					UE_LOG(LogTemp, Log, TEXT("StopFire: Button released (Montage continues)"));
 				}
 			}
 		}
